@@ -1,42 +1,63 @@
-/* figures.js — 자동 생성 파일. 손으로 고치지 마세요.
-   update-data.py 가 Meta에서 받아 이 파일을 통째로 다시 씁니다.
-   여기 적힌 것은 Meta가 '센 값'뿐입니다.
-   CTR·CPC·CPM 같은 나눗셈 값은 화면을 그릴 때 계산합니다(common.js의 calc).
+/* figures.js — 실적 숫자. 갱신할 때 이 파일만 바꾼다.
+   출처: Makuake 애널리틱스 (owner.makuake.com/projects/140182/analytics/)
+   수집 방법: 시작일 고정 + 종료일 이동으로 누적값을 받아 앞뒤 차이로 하루치 산출.
+   검산: 일별 세 열의 합이 애널리틱스 총계와 일치함을 확인했다. */
 
-   마지막 갱신: 2026-08-27
-   클릭은 Link Clicks 기준입니다. */
+const FIGURES = {
+  updatedAt: '2026-08-31',
+  dataThrough: '2026-08-30',      // 이 날짜까지의 실적이 들어 있다
 
-const REPORT_FIGURES = {
-  fetchedAt: '2026-08-27',
-
-  period: {
-    periodStart: '2026-08-19',
-    periodEnd: '2026-08-25',
-    days: 7,
-    generatedAt: '2026-08-27'
+  /* Makuake 공개 페이지에 표시되는 확정 수치 */
+  public: {
+    amount: 666200,               // 応援購入総額 (엔)
+    supporters: 18,               // サポーター (명)
+    makuakeGoal: 100000           // Makuake 형식 목표액 (엔)
   },
 
-  totals: {"spend": 418651, "impressions": 81611, "reach": 67889, "linkClicks": 6329, "results": 4895},
+  /* 애널리틱스 누적. 결제 대기분이 포함되어 공개 수치보다 1건(¥29,900) 많다. */
+  analytics: {
+    amount: 696100,
+    orders: 19,
+    pageViews: 15230
+  },
 
+  /* 광고비 (엔).
+     estimated: true 이면 화면에 '추정' 표시가 붙는다.
+     Makuake 대행 광고비가 포함된 추정치이며, 매주 수요일 리포트 수령 후 확정치로 교체한다. */
+  adSpend: {
+    total: 148007,
+    estimated: true,
+    note: 'Makuake 대행 광고비 포함 추정치'
+  },
+
+  /* 일별 실적. 누적값의 차이로 산출했다. */
   daily: [
-    { date: "2026-08-19", spend: 71309, impressions: 14471, reach: 12956, linkClicks: 738, results: 641 },
-    { date: "2026-08-20", spend: 61438, impressions: 12648, reach: 11693, linkClicks: 683, results: 601 },
-    { date: "2026-08-21", spend: 70619, impressions: 13645, reach: 13114, linkClicks: 1256, results: 967 },
-    { date: "2026-08-22", spend: 36711, impressions: 7368, reach: 7368, linkClicks: 745, results: 528 },
-    { date: "2026-08-23", spend: 58282, impressions: 11907, reach: 11555, linkClicks: 1057, results: 745 },
-    { date: "2026-08-24", spend: 53675, impressions: 10391, reach: 9930, linkClicks: 891, results: 666 },
-    { date: "2026-08-25", spend: 66617, impressions: 11181, reach: 10670, linkClicks: 959, results: 747 }
+    { date: '2026-08-19', amount: 121700, pageViews: 2721, orders: 3 },
+    { date: '2026-08-20', amount: 29900,  pageViews: 1610, orders: 1 },
+    { date: '2026-08-21', amount: 29900,  pageViews: 1509, orders: 1 },
+    { date: '2026-08-22', amount: 89700,  pageViews: 1713, orders: 3 },
+    { date: '2026-08-23', amount: 29900,  pageViews: 1252, orders: 1 },
+    { date: '2026-08-24', amount: 29900,  pageViews: 1361, orders: 1 },
+    { date: '2026-08-25', amount: 215600, pageViews: 1433, orders: 4 },
+    { date: '2026-08-26', amount: 0,      pageViews: 1643, orders: 0 },
+    { date: '2026-08-27', amount: 59800,  pageViews: 801,  orders: 2 },
+    { date: '2026-08-28', amount: 29900,  pageViews: 461,  orders: 1 },
+    { date: '2026-08-29', amount: 0,      pageViews: 450,  orders: 0 },
+    { date: '2026-08-30', amount: 59800,  pageViews: 276,  orders: 2 }
   ],
 
-  /* adName은 Meta 광고 관리자의 광고 이름 그대로. config.js가 이 이름으로 번역·썸네일을 찾는다. */
-  creatives: [
-    { adName: "영상_C", spend: 374558, impressions: 72869, reach: 61305, linkClicks: 5948, results: 4564 },
-    { adName: "이미지_01", spend: 19262, impressions: 3742, reach: 3448, linkClicks: 169, results: 150 },
-    { adName: "썸네일", spend: 14689, impressions: 2913, reach: 2759, linkClicks: 109, results: 102 },
-    { adName: "영상_B", spend: 9974, impressions: 2051, reach: 1787, linkClicks: 102, results: 78 },
-    { adName: "GIF_03", spend: 168, impressions: 36, reach: 34, linkClicks: 1, results: 1 }
-  ],
+  /* 소재별 성과. Makuake 광고 리포트(주 1회 수요일)를 받으면 채운다. */
+  creatives: [],
 
-  /* 등록은 되어 있으나 아직 노출이 배분되지 않은 광고. */
-  standby: ["영상_A", "이미지_02", "GIF_01", "GIF_02"]
+  /* 비교용 과거 프로젝트. 각 프로젝트 애널리틱스의 전체 기간 누적값. */
+  compare: [
+    { id: '140182', start: '2026-08-19', end: '2026-09-15', amount: 696100,   pageViews: 15230,  orders: 19,   ongoing: true },
+    { id: '136500', start: '2026-04-14', end: '2026-05-30', amount: 921700,   pageViews: 13847,  orders: 23 },
+    { id: '126886', start: '2025-05-29', end: '2025-07-30', amount: 24356200, pageViews: 129988, orders: 1086 },
+    { id: '123556', start: '2025-02-12', end: '2025-03-28', amount: 5100400,  pageViews: 27571,  orders: 316 },
+    { id: '121371', start: '2024-11-13', end: '2024-12-18', amount: 1132660,  pageViews: 11393,  orders: 191 },
+    { id: '115428', start: '2024-05-16', end: '2024-06-28', amount: 12024600, pageViews: 40514,  orders: 256 },
+    { id: '108570', start: '2023-11-27', end: '2024-01-05', amount: 10647640, pageViews: 49248,  orders: 1676 },
+    { id: '63609',  start: '2021-01-06', end: '2021-02-27', amount: 16898300, pageViews: 74051,  orders: 1126 }
+  ]
 };
