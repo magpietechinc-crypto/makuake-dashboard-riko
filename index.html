@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RIKO 日本 Makuakeローンチキャンペーン 成果レポート</title>
+<link rel="stylesheet" href="css/report.css">
+</head>
+<body>
+
+<!-- 표지 -->
+<div class="cover-band">
+  <div class="wrap">
+    <div class="langbar" id="langbar"></div>
+    <div id="cover"></div>
+  </div>
+</div>
+
+<main>
+
+  <!-- 캠페인 전체 성과 -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 data-i18n="secTotalTitle"></h2>
+        <p data-i18n="secTotalDesc"></p>
+      </div>
+      <div class="kpi-grid" id="headline"></div>
+      <div class="stat-row" id="secondary"></div>
+      <p class="fxnote" id="fxnote"></p>
+    </div>
+  </section>
+
+  <!-- 일별 추이 -->
+  <section class="page-break">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 data-i18n="secTrendTitle"></h2>
+        <p data-i18n="secTrendDesc"></p>
+      </div>
+      <figure class="chart" id="trend-chart"></figure>
+      <div class="legend" id="trend-legend"></div>
+      <div class="table-wrap" id="trend-table"></div>
+    </div>
+  </section>
+
+  <!-- 소재별 성과 -->
+  <section class="page-break">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 data-i18n="secCreativeTitle"></h2>
+        <p data-i18n="secCreativeDesc"></p>
+      </div>
+      <div class="creative-list" id="creative-list"></div>
+      <div class="table-wrap" id="creative-table"></div>
+    </div>
+  </section>
+
+  <!-- 대기 소재 -->
+  <section class="standby-band">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 data-i18n="secStandbyTitle"></h2>
+        <p data-i18n="secStandbyDesc"></p>
+      </div>
+      <ul class="standby" id="standby-list"></ul>
+    </div>
+  </section>
+
+  <!-- 지표 읽는 법 -->
+  <section class="closing-band">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 data-i18n="secGlossaryTitle"></h2>
+        <p data-i18n="secGlossaryDesc"></p>
+      </div>
+      <ul class="notes" id="glossary"></ul>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap" id="footnotes"></div>
+  </footer>
+
+</main>
+
+<script src="js/i18n.js"></script>
+<script src="js/common.js"></script>
+<script src="js/config.js"></script>
+<script src="js/figures.js"></script>
+<script src="js/data.js"></script>
+<script src="js/summary.js"></script>
+<script src="js/trend.js"></script>
+<script src="js/creatives.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
