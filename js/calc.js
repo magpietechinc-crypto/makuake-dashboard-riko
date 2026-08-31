@@ -19,7 +19,12 @@ const CALC = (() => {
   /* 대표 금액은 Makuake 공개 표시액. 손익도 같은 기준으로 계산해 화면 안에서 앞뒤가 맞게 한다. */
   const revenue = FIGURES.public.amount;
   const units   = FIGURES.public.supporters;
-  const adSpend = FIGURES.adSpend.total;
+
+  /* 광고비 = 자체 Meta(원화 실측을 엔화 환산) + Makuake 대행(추정) */
+  const rate      = CONFIG.fx.krwPerJpy;
+  const metaJpy   = FIGURES.adSpend.meta.krw / rate;
+  const agencyJpy = FIGURES.adSpend.agency.jpy;
+  const adSpend   = metaJpy + agencyJpy;
 
   /* ── 지출 ────────────────────────────────────── */
   const cost = {
@@ -67,13 +72,73 @@ const CALC = (() => {
     ? (FIGURES.analytics.orders / FIGURES.analytics.pageViews) * 100
     : 0;
 
+  /* ── 자체 Meta 광고 지표 ─────────────────────── */
+  const m = FIGURES.metaAds;
+  const mt = m.totals;
+  const ads = {
+    spendJpy:   metaJpy,
+    spendKrw:   mt.spendKrw,
+    agencyJpy,
+    runDays:    daysBetween(m.runStart, m.runEnd),
+    impressions: mt.impressions,
+    reach:      mt.reach,
+    linkClicks: mt.linkClicks,
+    lpv:        mt.lpv,
+    frequency:  mt.reach ? mt.impressions / mt.reach : 0,
+    ctr:        mt.impressions ? (mt.linkClicks / mt.impressions) * 100 : 0,
+    cpcJpy:     mt.linkClicks ? metaJpy / mt.linkClicks : 0,
+    cpmJpy:     mt.impressions ? (metaJpy / mt.impressions) * 1000 : 0,
+    cplpvJpy:   mt.lpv ? metaJpy / mt.lpv : 0,
+    /* 클릭한 사람 중 실제로 페이지가 열린 비율 */
+    landingRate: mt.linkClicks ? (mt.lpv / mt.linkClicks) * 100 : 0
+  };
+
+  /* 소재별 파생 지표 */
+  ads.creatives = m.creatives.map(c => ({
+    ...c,
+    spendJpy: c.spendKrw / rate,
+    share:    mt.spendKrw ? (c.spendKrw / mt.spendKrw) * 100 : 0,
+    ctr:      c.impressions ? (c.linkClicks / c.impressions) * 100 : 0,
+    cpcJpy:   c.linkClicks ? (c.spendKrw / rate) / c.linkClicks : 0,
+    cplpvJpy: c.lpv ? (c.spendKrw / rate) / c.lpv : 0
+  }));
+
+  /* ── 광고 집행기 vs 중단 후 ──────────────────── */
+  const onDays  = FIGURES.daily.filter(d => d.date >= m.runStart && d.date <= m.runEnd);
+  const offDays = FIGURES.daily.filter(d => d.date > m.runEnd);
+  const avg = (arr, k) => arr.length ? arr.reduce((s, d) => s + d[k], 0) / arr.length : 0;
+  const sum = (arr, k) => arr.reduce((s, d) => s + d[k], 0);
+
+  const period = {
+    on: {
+      label: '광고 집행기', from: m.runStart, to: m.runEnd, days: onDays.length,
+      views: sum(onDays, 'pageViews'), orders: sum(onDays, 'orders'), amount: sum(onDays, 'amount'),
+      viewsPerDay: avg(onDays, 'pageViews'), ordersPerDay: avg(onDays, 'orders'), amountPerDay: avg(onDays, 'amount')
+    },
+    off: {
+      label: '광고 중단 후', from: offDays[0] ? offDays[0].date : null,
+      to: offDays.length ? offDays[offDays.length - 1].date : null, days: offDays.length,
+      views: sum(offDays, 'pageViews'), orders: sum(offDays, 'orders'), amount: sum(offDays, 'amount'),
+      viewsPerDay: avg(offDays, 'pageViews'), ordersPerDay: avg(offDays, 'orders'), amountPerDay: avg(offDays, 'amount')
+    }
+  };
+  period.viewsDrop  = period.on.viewsPerDay  ? (period.off.viewsPerDay  / period.on.viewsPerDay  - 1) * 100 : 0;
+  period.ordersDrop = period.on.ordersPerDay ? (period.off.ordersPerDay / period.on.ordersPerDay - 1) * 100 : 0;
+
+  /* 광고 집행기의 Meta 기준 전환율: Meta가 센 랜딩 도달 대비 그 기간 신청 건수 */
+  ads.metaCvr = mt.lpv ? (period.on.orders / mt.lpv) * 100 : 0;
+  ads.cpaJpy  = period.on.orders ? metaJpy / period.on.orders : 0;
+  /* 신청 1건이 만드는 매출 대비 광고비 비중 */
+  ads.cpaShare = avgUnitPrice ? (ads.cpaJpy / avgUnitPrice) * 100 : 0;
+
   return {
     totalDays, elapsedDays, remainDays, sgaPerDay, today,
-    revenue, units, adSpend, cost, profit, profitRate,
+    revenue, units, adSpend, metaJpy, agencyJpy, cost, profit, profitRate,
     revenueExVat, roas,
     avgUnitPrice, mcRate, margin, breakEven,
     breakEvenPct: breakEven ? (revenue / breakEven) * 100 : 0,
     goalPct: CONFIG.goal.fixed ? (revenue / CONFIG.goal.fixed) * 100 : 0,
-    recentAvg, forecast, cumulative, cvr
+    recentAvg, forecast, cumulative, cvr,
+    ads, period
   };
 })();

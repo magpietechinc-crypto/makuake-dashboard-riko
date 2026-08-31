@@ -56,10 +56,12 @@ function chartOptions(o) {
 
 /* ── 탭 ──────────────────────────────────────── */
 const TABS = [
-  { id: 'overview', name: '매출 현황',    render: renderOverview },
-  { id: 'funding',  name: '본펀딩',       render: renderFunding },
-  { id: 'creative', name: '소재별 성과',  render: renderCreative },
-  { id: 'compare',  name: '프로젝트 비교', render: renderCompare }
+  { id: 'overview',  name: '매출 현황',    render: renderOverview },
+  { id: 'funding',   name: '본펀딩',       render: renderFunding },
+  { id: 'ads',       name: '광고 성과',    render: renderAds },
+  { id: 'creative',  name: '소재별 성과',  render: renderCreative },
+  { id: 'compare',   name: '프로젝트 비교', render: renderCompare },
+  { id: 'diagnosis', name: '진단·개선',    render: renderDiagnosis }
 ];
 
 let ACTIVE = 'overview';

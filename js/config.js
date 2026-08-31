@@ -41,6 +41,19 @@ const CONFIG = {
   /* 예상 최종 펀딩액을 추정할 때 쓸 최근 일수 */
   forecastWindowDays: 7,
 
+  /* 진단 기준값. 이 숫자를 넘으면 '진단·개선' 탭에 항목이 뜬다.
+     지어낸 문장은 쓰지 않는다. 규칙에 걸린 것만, 근거 수치와 함께 나온다. */
+  diagnose: {
+    trafficDropPct: -30,     // 광고 중단 후 일평균 조회수가 이만큼 떨어지면 경고
+    orderDropPct: -30,       // 신청 건수 하락 경고 기준
+    spendConcentration: 70,  // 소재 하나에 광고비가 이 % 이상 쏠리면 경고
+    ctrGapRatio: 1.5,        // 포맷 간 CTR 차이가 이 배수 이상이면 알림
+    minImpressions: 500,     // 이보다 노출이 적은 포맷은 비교에서 뺀다 (표본이 작아 배수가 튄다)
+    landingRateOk: 70,       // 클릭 대비 랜딩 도달률이 이 % 이상이면 양호
+    cpaShareOk: 20,          // 신청 1건당 광고비가 건당 매출의 이 % 이하면 양호
+    cvrLowRatio: 0.5         // 과거 평균 전환율의 이 배수 미만이면 경고
+  },
+
   /* 비교 프로젝트 표시 이름. Makuake 프로젝트 ID가 열쇠다. */
   compareLabels: {
     '140182': { short: 'RIKO', full: '자동 습식 급식기 RIKO' },

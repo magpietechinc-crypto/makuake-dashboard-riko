@@ -3,7 +3,7 @@
 function renderOverview(el) {
   const C = CALC;
   const F = FIGURES;
-  const est = F.adSpend.estimated ? ` <span class="tag tag-est">추정</span>` : '';
+  const est = F.adSpend.agency.estimated ? ` <span class="tag tag-est">일부 추정</span>` : '';
 
   const card = (label, value, sub, cls) => `
     <div class="card">
@@ -18,7 +18,9 @@ function renderOverview(el) {
       ${card('총 펀딩 금액', fmt.money(C.revenue),
              `서포터 ${fmt.int(C.units)}명 · 1건당 평균 ${fmt.money(C.avgUnitPrice)}<br>
               <span style="color:var(--text-tertiary)">${fmt.moneyAlt(C.revenue)}</span>`)}
-      ${card('총 사용 광고비' + est, fmt.money(C.adSpend), fmt.moneyAlt(C.adSpend) + ' · ' + esc(F.adSpend.note))}
+      ${card('총 사용 광고비' + est, fmt.money(C.adSpend),
+             `자체 Meta ${fmt.money(C.metaJpy)} <span style="color:var(--text-tertiary)">(실측)</span><br>
+              Makuake 대행 ${fmt.money(C.agencyJpy)} <span style="color:var(--text-tertiary)">(추정)</span>`)}
       ${card('남은 펀딩 기간', C.remainDays + '일',
              `${fmt.md(CONFIG.project.startDate)} ~ ${fmt.md(CONFIG.project.endDate)} 중 ${C.elapsedDays}일 경과`)}
       ${card('현재 매출 이익', fmt.money(C.profit),
@@ -67,7 +69,8 @@ function renderOverview(el) {
           ${row('MC (제조원가)', `${fmt.money(CONFIG.cost.mcPerUnit)} × ${fmt.int(C.units)}건`, C.cost.mc)}
           ${row('수수료', fmt.pct(CONFIG.cost.feeRate * 100, 2), C.cost.fee)}
           ${row('부가세', fmt.pct(CONFIG.cost.vatRate * 100, 2), C.cost.vat)}
-          ${row('광고비' + est, F.adSpend.estimated ? '추정' : '', C.cost.ad)}
+          ${row('광고비 — 자체 Meta', '실측', C.metaJpy)}
+          ${row('광고비 — Makuake 대행' + est, '추정', C.agencyJpy)}
           ${row('LOSS', fmt.pct(CONFIG.cost.lossRate * 100, 0), C.cost.loss)}
           ${row('쿠폰', '', C.cost.coupon)}
           ${row('판관비', `${fmt.money(C.sgaPerDay)}/일 × ${C.elapsedDays}일`, C.cost.sga)}
