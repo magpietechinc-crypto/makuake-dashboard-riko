@@ -4,21 +4,21 @@
    검산: 일별 세 열의 합이 애널리틱스 총계와 일치함을 확인했다. */
 
 const FIGURES = {
-  updatedAt: '2026-08-31',
-  dataThrough: '2026-08-30',      // 이 날짜까지의 실적이 들어 있다
+  updatedAt: '2026-09-01',
+  dataThrough: '2026-08-31',      // 이 날짜까지의 실적이 들어 있다
 
   /* Makuake 공개 페이지에 표시되는 확정 수치 */
   public: {
-    amount: 666200,               // 応援購入総額 (엔)
-    supporters: 18,               // サポーター (명)
+    amount: 696100,               // 応援購入総額 (엔)
+    supporters: 19,               // サポーター (명)
     makuakeGoal: 100000           // Makuake 형식 목표액 (엔)
   },
 
   /* 애널리틱스 누적. 결제 대기분이 포함되어 공개 수치보다 1건(¥29,900) 많다. */
   analytics: {
-    amount: 696100,
-    orders: 19,
-    pageViews: 15230
+    amount: 726000,
+    orders: 20,
+    pageViews: 15687
   },
 
   /* 광고비. 두 갈래로 나눠 담는다.
@@ -81,7 +81,8 @@ const FIGURES = {
     { date: '2026-08-27', amount: 59800,  pageViews: 801,  orders: 2 },
     { date: '2026-08-28', amount: 29900,  pageViews: 461,  orders: 1 },
     { date: '2026-08-29', amount: 0,      pageViews: 450,  orders: 0 },
-    { date: '2026-08-30', amount: 59800,  pageViews: 276,  orders: 2 }
+    { date: '2026-08-30', amount: 59800,  pageViews: 276,  orders: 2 },
+    { date: '2026-08-31', amount: 29900,  pageViews: 457,  orders: 1 }
   ],
 
   /* Makuake 대행 광고의 소재별 성과. 주간 리포트를 받으면 여기에 채운다.
@@ -90,7 +91,7 @@ const FIGURES = {
 
   /* 비교용 과거 프로젝트. 각 프로젝트 애널리틱스의 전체 기간 누적값. */
   compare: [
-    { id: '140182', start: '2026-08-19', end: '2026-09-15', amount: 696100,   pageViews: 15230,  orders: 19,   ongoing: true },
+    { id: '140182', start: '2026-08-19', end: '2026-09-15', amount: 726000,   pageViews: 15687,  orders: 20,   ongoing: true },
     { id: '136500', start: '2026-04-14', end: '2026-05-30', amount: 921700,   pageViews: 13847,  orders: 23 },
     { id: '126886', start: '2025-05-29', end: '2025-07-30', amount: 24356200, pageViews: 129988, orders: 1086 },
     { id: '123556', start: '2025-02-12', end: '2025-03-28', amount: 5100400,  pageViews: 27571,  orders: 316 },
