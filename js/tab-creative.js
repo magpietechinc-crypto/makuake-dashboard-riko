@@ -108,13 +108,40 @@ function renderCreative(el) {
       </div>
     </div>` : '';
 
-  const agencyBlock = (FIGURES.agencyCreatives && FIGURES.agencyCreatives.length) ? '' : `
+  /* Makuake 대행 광고는 리포트가 매체 단위까지만 준다. 소재별 수치는 들어 있지 않다. */
+  const G = CALC.agency;
+  const agencyBlock = !G ? '' : `
     <div class="section">
-      <h2>Makuake 대행 광고 소재</h2>
-      <div class="empty">
-        <strong>아직 리포트가 없습니다</strong>
-        Makuake 대행 광고 리포트는 매주 수요일에 옵니다.<br>
-        받아서 폴더에 넣어주시면 이 자리에 대행 광고의 소재별 성과가 채워집니다.
+      <h2>Makuake 대행 광고 — 매체별</h2>
+      <p class="hint">
+        주간 리포트(${esc(G.reportFile)}) 기준입니다.
+        <strong>대행 리포트는 매체 단위까지만 제공되고 소재별 수치는 들어 있지 않습니다.</strong>
+        소재별로 보시려면 대행사에 소재 단위 리포트를 요청해야 합니다.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>매체</th><th>광고비</th><th>비중</th><th>노출</th><th>클릭</th>
+            <th>CTR</th><th>CPM</th><th>CPC</th><th>전환</th><th>CPA</th>
+          </tr></thead>
+          <tbody>
+            ${G.media.map(m => {
+              const share = G.costJpy ? (m.costJpy / G.costJpy) * 100 : 0;
+              return `<tr class="${m.cv > 0 ? 'me' : ''}">
+                <td>${esc(m.name)}</td>
+                <td>${fmt.money(m.costJpy)}</td>
+                <td>${fmt.pct(share)}</td>
+                <td>${fmt.int(m.impressions)}</td>
+                <td>${fmt.int(m.clicks)}</td>
+                <td>${m.ctr == null ? '—' : fmt.pct(m.ctr, 2)}</td>
+                <td>${m.cpmJpy == null ? '—' : fmt.moneyFine(m.cpmJpy)}</td>
+                <td>${m.cpcJpy == null ? '—' : fmt.moneyFine(m.cpcJpy)}</td>
+                <td>${fmt.int(m.cv)}</td>
+                <td>${m.cpaJpy == null ? '—' : fmt.money(m.cpaJpy)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     </div>`;
 

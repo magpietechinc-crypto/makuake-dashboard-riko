@@ -59,8 +59,8 @@ function renderAds(el) {
       <table>
         <thead><tr>
           <th>일평균</th>
-          <th>광고 집행기<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.on.from)}~${fmt.short(P.on.to)} · ${P.on.days}일</span></th>
-          <th>광고 중단 후<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.off.from)}~${fmt.short(P.off.to)} · ${P.off.days}일</span></th>
+          <th>자체 Meta 광고 기간<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.on.from)}~${fmt.short(P.on.to)} · ${P.on.days}일</span></th>
+          <th>Makuake 대행 기간<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.off.from)}~${fmt.short(P.off.to)} · ${P.off.days}일</span></th>
           <th>변화</th>
         </tr></thead>
         <tbody>
@@ -70,7 +70,87 @@ function renderAds(el) {
         </tbody>
       </table>
     </div>
-    <p class="hint" style="margin-top:10px">Makuake 페이지 기준 수치입니다.</p>`;
+    <p class="hint" style="margin-top:10px">Makuake 페이지 기준 수치입니다. 광고가 멈춘 게 아니라 자체 집행에서 대행으로 넘어간 구간입니다.</p>`;
+
+  /* ── Makuake 대행 광고 ──────────────────────── */
+  const G = CALC.agency;
+  const V = CALC.adVs;
+  const agencyBlock = !G ? '' : `
+    <div class="section">
+      <h2>Makuake 대행 광고</h2>
+      <p class="hint">
+        주간 리포트 <strong>${esc(G.reportFile)}</strong> 기준 ·
+        ${fmt.md(G.weekFrom)} ~ ${fmt.md(G.weekTo)} 중 ${G.deliveryDays}일 집행 ·
+        게재 예정 종료 ${fmt.md(G.plannedEnd)}
+      </p>
+      <div class="grid g4" style="margin-bottom:12px">
+        ${card('광고비', fmt.money(G.costJpy), `${fmt.moneyAlt(G.costJpy)} · 예산 소진율 ${fmt.pct(G.totals.budgetUsePct)}`)}
+        ${card('전환 (cv)', fmt.int(G.cv) + '건', `Makuake 애널리틱스 같은 기간 신청 건수와 일치`)}
+        ${card('CPA', fmt.money(G.cpaJpy), `상한 ${fmt.money(G.capCpaJpy)} 대비 <span class="neg">+${fmt.pct(G.capOverPct, 0)}</span>`)}
+        ${card('ROAS', fmt.pct(G.roas, 1), `응원 금액 ${fmt.money(G.amountJpy)}`)}
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>매체</th><th>광고비</th><th>노출</th><th>클릭</th><th>CTR</th>
+            <th>CPC</th><th>CPM</th><th>전환</th><th>CVR</th><th>CPA</th>
+          </tr></thead>
+          <tbody>
+            ${G.media.map(m => `<tr class="${m.cv > 0 ? 'me' : ''}">
+              <td>${esc(m.name)}</td>
+              <td>${fmt.money(m.costJpy)}</td>
+              <td>${fmt.int(m.impressions)}</td>
+              <td>${fmt.int(m.clicks)}</td>
+              <td>${m.ctr == null ? '—' : fmt.pct(m.ctr, 2)}</td>
+              <td>${m.cpcJpy == null ? '—' : fmt.moneyFine(m.cpcJpy)}</td>
+              <td>${m.cpmJpy == null ? '—' : fmt.moneyFine(m.cpmJpy)}</td>
+              <td>${fmt.int(m.cv)}</td>
+              <td>${m.cvrPct == null ? '—' : fmt.pct(m.cvrPct, 2)}</td>
+              <td>${m.cpaJpy == null ? '—' : fmt.money(m.cpaJpy)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p class="hint" style="margin-top:10px">
+        전환이 나온 매체는 Facebook 하나입니다. RTBHouse는 노출 ${fmt.int(G.media[1].impressions)}회에 클릭 ${G.media[1].clicks}회로
+        CTR이 ${fmt.pct(G.media[1].ctr, 2)}이고 전환은 0건, Criteo는 아직 집행되지 않았습니다.
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>자체 광고 vs 대행 광고</h2>
+      <p class="hint">
+        같은 잣대로 맞췄습니다. 대행사가 기간 총계를 광고 성과로 잡았으므로(리포트의 전환 6건·${fmt.money(G.amountJpy)}가
+        Makuake 애널리틱스의 같은 기간 실적과 정확히 일치), 자체 Meta 쪽도 집행 기간의 총계로 계산했습니다.
+        <strong>둘 다 진짜 귀속이 아니라 기간 총계 기준</strong>이라는 점은 감안해서 보셔야 합니다.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th></th>
+            <th>자체 Meta<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.on.from)}~${fmt.short(P.on.to)} · ${V.self.days}일</span></th>
+            <th>Makuake 대행<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.off.from)}~${fmt.short(P.off.to)} · ${V.agency.days}일</span></th>
+            <th>차이</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>광고비</td><td>${fmt.money(V.self.costJpy)}</td><td>${fmt.money(V.agency.costJpy)}</td>
+                <td class="neg">${V.costRatio.toFixed(1)}배</td></tr>
+            <tr><td>신청 건수</td><td>${V.self.orders}건</td><td>${V.agency.orders}건</td>
+                <td class="neg">${(V.agency.orders / V.self.orders * 100 - 100).toFixed(0)}%</td></tr>
+            <tr><td>펀딩 금액</td><td>${fmt.money(V.self.amountJpy)}</td><td>${fmt.money(V.agency.amountJpy)}</td>
+                <td class="neg">${(V.agency.amountJpy / V.self.amountJpy * 100 - 100).toFixed(0)}%</td></tr>
+            <tr><td><strong>신청 1건당 광고비</strong></td>
+                <td><strong>${fmt.money(V.self.cpaJpy)}</strong></td>
+                <td><strong>${fmt.money(V.agency.cpaJpy)}</strong></td>
+                <td class="neg"><strong>${V.cpaRatio.toFixed(1)}배 비쌈</strong></td></tr>
+            <tr><td><strong>ROAS</strong></td>
+                <td><strong>${fmt.pct(V.self.roas, 0)}</strong></td>
+                <td><strong>${fmt.pct(V.agency.roas, 0)}</strong></td>
+                <td class="neg"><strong>${V.roasRatio.toFixed(1)}배 차이</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
 
   /* ── 일별 상세 ───────────────────────────────── */
   const rows = A.daily.map(d => `
@@ -118,8 +198,9 @@ function renderAds(el) {
   el.innerHTML = `
     <div class="section">${head}${kpi}</div>
     <div class="section">${kpi2}</div>
+    ${agencyBlock}
     <div class="section">
-      <h2>광고를 멈춘 뒤 무슨 일이 있었나</h2>
+      <h2>자체 광고에서 대행으로 넘어간 뒤</h2>
       ${compare}
     </div>
     <div class="section">

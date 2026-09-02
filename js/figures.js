@@ -27,7 +27,40 @@ const FIGURES = {
      두 값의 합이 원가표의 ¥148,007 과 맞는다. */
   adSpend: {
     meta:   { krw: 418651, note: 'Meta 광고 관리자 실측' },
-    agency: { jpy: 99997, estimated: true, note: 'Makuake 대행 광고비 (리포트 수령 전 추정)' }
+    agency: { jpy: 111837, estimated: false, note: 'Makuake 주간 리포트 실측 (0826-0901)' }
+  },
+
+  /* Makuake 대행 광고. 주간 리포트(광고리포트_0826-0901.docx)에서 옮긴 값이다.
+     자체 Meta 광고를 멈춘 8/26부터 대행이 시작됐다.
+     cv(전환)와 応援金額은 대행사가 기간 전체를 광고 성과로 잡은 값이며,
+     Makuake 애널리틱스의 같은 기간 실적과 정확히 일치한다(신청 6건 / ¥179,400).
+     즉 진짜 귀속이 아니라 '기간 총계' 기준이다. 자체 Meta 쪽도 같은 기준으로 비교한다. */
+  agencyAds: {
+    reportFile: '광고리포트_0826-0901.docx',
+    weekFrom: '2026-08-26',
+    weekTo: '2026-09-01',
+    plannedEnd: '2026-09-15',
+    deliveryDays: 6,
+    capCpaJpy: 12760,              // 대행사가 잡은 상한 CPA
+    totals: {
+      costJpy: 111837,
+      cv: 6,
+      cpaJpy: 18639,
+      amountJpy: 179400,           // 応援金額
+      roasPct: 160.41,
+      budgetUsePct: 22.37          // 投下率
+    },
+    media: [
+      { name: 'Facebook', costJpy: 109444, impressions: 43004, clicks: 1325,
+        ctr: 3.08, cpcJpy: 83, cpmJpy: 2545, cv: 6, cvrPct: 0.45,
+        cpaJpy: 18241, cpaGapPct: 142.95 },
+      { name: 'RTBHouse', costJpy: 2393, impressions: 87051, clicks: 49,
+        ctr: 0.06, cpcJpy: 49, cpmJpy: 27, cv: 0, cvrPct: 0,
+        cpaJpy: null, cpaGapPct: null },
+      { name: 'Criteo', costJpy: 0, impressions: 0, clicks: 0,
+        ctr: null, cpcJpy: null, cpmJpy: null, cv: 0, cvrPct: null,
+        cpaJpy: null, cpaGapPct: null }
+    ]
   },
 
   /* 자체 집행 Meta 광고. 2026-08-19 ~ 08-25 집행 후 중단(PAUSED).

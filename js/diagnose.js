@@ -11,19 +11,24 @@ function buildFindings() {
   const add = (level, title, evidence, action) => out.push({ level, title, evidence, action });
 
   /* ── 1. 광고를 멈춘 뒤 트래픽 ─────────────────── */
+  const hasAgency = !!CALC.agency;
+  const afterLabel = hasAgency ? '대행 전환 후' : '광고 중단 후';
+
   if (P.off.days > 0 && P.viewsDrop <= T.trafficDropPct) {
-    add('warn', '광고를 멈추자 트래픽이 절반 아래로 떨어졌습니다',
-      `일평균 페이지 조회수가 집행기 ${fmt.int(P.on.viewsPerDay)}회에서 ` +
-      `중단 후 ${fmt.int(P.off.viewsPerDay)}회로 ${Math.abs(P.viewsDrop).toFixed(0)}% 줄었습니다. ` +
+    add('warn', `대행으로 넘어간 뒤 트래픽이 ${Math.abs(P.viewsDrop).toFixed(0)}% 줄었습니다`,
+      `일평균 페이지 조회수가 자체 Meta 기간 ${fmt.int(P.on.viewsPerDay)}회에서 ` +
+      `${afterLabel} ${fmt.int(P.off.viewsPerDay)}회로 떨어졌습니다. ` +
       `마지막 날은 ${fmt.int(FIGURES.daily[FIGURES.daily.length - 1].pageViews)}회입니다.`,
-      '이 페이지는 광고가 들어가야 사람이 옵니다. Makuake 대행 광고가 실제로 트래픽을 만들고 있는지 리포트에서 가장 먼저 확인할 지점입니다.');
+      hasAgency
+        ? '대행 광고가 돌고 있는데도 트래픽이 이만큼 줄었습니다. 대행사에 노출·클릭 목표를 확인할 지점입니다.'
+        : '이 페이지는 광고가 들어가야 사람이 옵니다.');
   }
 
   if (P.off.days > 0 && P.ordersDrop <= T.orderDropPct) {
-    add('warn', '신청 건수도 함께 줄었습니다',
-      `일평균 신청이 집행기 ${P.on.ordersPerDay.toFixed(1)}건에서 ` +
-      `중단 후 ${P.off.ordersPerDay.toFixed(1)}건으로 ${Math.abs(P.ordersDrop).toFixed(0)}% 줄었습니다.`,
-      '광고 없이도 신청이 완전히 끊기지는 않았습니다. 광고를 다시 넣으면 증폭될 여지가 있다는 뜻입니다.');
+    add('warn', `신청 건수도 ${Math.abs(P.ordersDrop).toFixed(0)}% 줄었습니다`,
+      `일평균 신청이 자체 Meta 기간 ${P.on.ordersPerDay.toFixed(1)}건에서 ` +
+      `${afterLabel} ${P.off.ordersPerDay.toFixed(1)}건으로 떨어졌습니다.`,
+      '광고비를 더 쓰는 구간에서 신청이 줄었습니다. 아래 자체 광고와의 비교를 함께 보시면 원인이 좁혀집니다.');
   }
 
   /* ── 2. 전환율 위치 ──────────────────────────── */
@@ -83,6 +88,36 @@ function buildFindings() {
       `${sb.map(s => esc(s.name)).join(', ')} — 노출 0회입니다. ` +
       `집행된 소재는 ${A.creatives.length}개뿐입니다.`,
       '이미 만들어 둔 자산입니다. 광고 재개 시 추가 제작 없이 바로 시험해볼 수 있습니다.');
+  }
+
+  /* ── 6.5 Makuake 대행 광고 ──────────────────── */
+  const G = CALC.agency;
+  const V = CALC.adVs;
+  if (G && V) {
+    if (V.cpaRatio >= 1.5) {
+      add('warn', `대행 광고의 신청 1건당 비용이 자체 광고의 ${V.cpaRatio.toFixed(1)}배입니다`,
+        `자체 Meta ${fmt.money(V.self.costJpy)}로 ${V.self.orders}건(건당 ${fmt.money(V.self.cpaJpy)}) · ` +
+        `대행 ${fmt.money(V.agency.costJpy)}로 ${V.agency.orders}건(건당 ${fmt.money(V.agency.cpaJpy)}). ` +
+        `광고비는 ${V.costRatio.toFixed(1)}배 쓰고 신청은 ${V.self.orders}건에서 ${V.agency.orders}건으로 줄었습니다.`,
+        '둘 다 기간 총계 기준이라 정확한 귀속은 아닙니다. 다만 같은 잣대로 봤을 때 차이가 커서, 대행사에 타겟팅과 소재 구성을 물어볼 근거가 됩니다.');
+    }
+    if (G.capOverPct > 0) {
+      add('warn', `대행 광고 CPA가 대행사 자체 상한을 ${fmt.pct(G.capOverPct, 0)} 넘었습니다`,
+        `상한 CPA ${fmt.money(G.capCpaJpy)} · 실제 ${fmt.money(G.cpaJpy)} (리포트상 乖離率 ${fmt.pct(G.media[0].cpaGapPct, 1)}).`,
+        '대행사도 목표를 못 맞추고 있다는 뜻입니다. 다음 리포트에서 개선 계획을 확인할 지점입니다.');
+    }
+    const dead = G.media.filter(m => m.costJpy > 0 && m.cv === 0);
+    if (dead.length) {
+      add('info', `전환이 0건인 매체가 ${dead.length}개 있습니다`,
+        dead.map(m => `${esc(m.name)} ${fmt.money(m.costJpy)} · 노출 ${fmt.int(m.impressions)}회 · 클릭 ${fmt.int(m.clicks)}회 · CTR ${fmt.pct(m.ctr, 2)}`).join(' / ') +
+        `. 전환은 Facebook ${G.media[0].cv}건이 전부입니다.`,
+        '금액은 작지만 노출은 많습니다. 계속 둘지 Facebook으로 몰지 대행사와 정리할 필요가 있습니다.');
+    }
+    if (G.totals.budgetUsePct < 50) {
+      add('info', `대행 광고 예산 소진율이 ${fmt.pct(G.totals.budgetUsePct)}입니다`,
+        `게재 예정 종료가 ${fmt.md(G.plannedEnd)}인데 ${G.deliveryDays}일 집행에 ${fmt.money(G.costJpy)}를 썼습니다.`,
+        '남은 예산이 많습니다. 지금 효율로 계속 쓸지, 조정 후 쓸지 정해야 합니다.');
+    }
   }
 
   /* ── 7. 포맷별 CTR 격차 ─────────────────────── */

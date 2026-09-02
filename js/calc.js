@@ -165,8 +165,47 @@ const CALC = (() => {
     };
   });
 
+  /* ── Makuake 대행 광고 ───────────────────────── */
+  /* 두 광고를 같은 잣대로 비교한다.
+     대행사는 '기간 총계'를 광고 성과로 잡았으므로(리포트의 cv 6건·¥179,400 이
+     Makuake 애널리틱스의 같은 기간 실적과 정확히 일치), 자체 Meta 쪽도 같은 기준으로 낸다. */
+  const ag = FIGURES.agencyAds;
+  const agency = ag ? {
+    ...ag,
+    costJpy: ag.totals.costJpy,
+    cv: ag.totals.cv,
+    amountJpy: ag.totals.amountJpy,
+    cpaJpy: ag.totals.cv ? ag.totals.costJpy / ag.totals.cv : 0,
+    roas: ag.totals.costJpy ? (ag.totals.amountJpy / ag.totals.costJpy) * 100 : 0,
+    /* 상한 CPA 대비 얼마나 넘었나 */
+    capOverPct: ag.capCpaJpy ? ((ag.totals.costJpy / ag.totals.cv) / ag.capCpaJpy - 1) * 100 : 0
+  } : null;
+
+  /* 자체 Meta 기간(8/19~8/25)을 같은 기준으로 환산 */
+  const selfRun = {
+    costJpy: metaJpy,
+    orders:  period.on.orders,
+    amountJpy: period.on.amount,
+    cpaJpy: period.on.orders ? metaJpy / period.on.orders : 0,
+    roas: metaJpy ? (period.on.amount / metaJpy) * 100 : 0,
+    days: period.on.days
+  };
+
+  /* 두 광고 맞대기 */
+  const adVs = agency ? {
+    self: selfRun,
+    agency: {
+      costJpy: agency.costJpy, orders: agency.cv, amountJpy: agency.amountJpy,
+      cpaJpy: agency.cpaJpy, roas: agency.roas, days: period.off.days
+    },
+    cpaRatio:  selfRun.cpaJpy ? agency.cpaJpy / selfRun.cpaJpy : 0,
+    roasRatio: agency.roas ? selfRun.roas / agency.roas : 0,
+    costRatio: selfRun.costJpy ? agency.costJpy / selfRun.costJpy : 0
+  } : null;
+
   return {
     totalDays, elapsedDays, remainDays, sgaPerDay, today,
+    agency, selfRun, adVs,
     revenue, units, adSpend, metaJpy, agencyJpy, cost, profit, profitRate,
     revenueExVat, roas,
     avgUnitPrice, mcRate, margin, breakEven,

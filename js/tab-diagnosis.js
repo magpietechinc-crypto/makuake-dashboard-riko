@@ -40,13 +40,19 @@ function renderDiagnosis(el) {
     <div class="card" style="margin-bottom:20px">
       <p class="label">한 줄 요약</p>
       <p style="font-size:16px;font-weight:700;margin:0 0 8px;line-height:1.5">
-        광고는 사람을 데려왔지만, 페이지가 그 사람을 잡지 못하고 있습니다.
+        ${CALC.adVs
+          ? '페이지 전환율이 낮은 데다, 대행으로 넘어간 뒤 광고 효율까지 떨어졌습니다.'
+          : '광고는 사람을 데려왔지만, 페이지가 그 사람을 잡지 못하고 있습니다.'}
       </p>
       <p style="font-size:13px;color:var(--text-secondary);margin:0">
-        Meta 광고가 트래픽 ${fmt.int(CALC.ads.traffic)}회를 만들었고 클릭 대비 도달률은
-        ${fmt.pct(CALC.ads.landingRate)}로 정상입니다. 그런데 전체 전환율은
-        ${fmt.pct(CALC.cvr, 2)}로 과거 프로젝트 평균에 크게 못 미칩니다.
-        광고를 멈춘 뒤에는 트래픽이 ${Math.abs(CALC.period.viewsDrop).toFixed(0)}% 줄었습니다.
+        전체 전환율이 ${fmt.pct(CALC.cvr, 2)}로 과거 프로젝트 평균에 크게 못 미칩니다.
+        자체 Meta 광고는 클릭 대비 페이지 도달률 ${fmt.pct(CALC.ads.landingRate)}로 정상이었고
+        신청 1건당 ${fmt.money(CALC.ads.cpaJpy)}였습니다.
+        ${CALC.adVs
+          ? `대행으로 넘어간 뒤에는 광고비를 ${CALC.adVs.costRatio.toFixed(1)}배 쓰면서
+             신청 1건당 ${fmt.money(CALC.adVs.agency.cpaJpy)}로 ${CALC.adVs.cpaRatio.toFixed(1)}배 비싸졌고,
+             트래픽은 ${Math.abs(CALC.period.viewsDrop).toFixed(0)}% 줄었습니다.`
+          : `광고를 멈춘 뒤에는 트래픽이 ${Math.abs(CALC.period.viewsDrop).toFixed(0)}% 줄었습니다.`}
       </p>
     </div>`;
 
