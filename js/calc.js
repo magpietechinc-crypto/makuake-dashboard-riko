@@ -16,9 +16,10 @@ const CALC = (() => {
   const sgaPerDay = c.sgaTotal / totalDays;
 
   /* ── 기준 수치 ───────────────────────────────── */
-  /* 대표 금액은 Makuake 공개 표시액. 손익도 같은 기준으로 계산해 화면 안에서 앞뒤가 맞게 한다. */
-  const revenue = FIGURES.public.amount;
-  const units   = FIGURES.public.supporters;
+  /* 확정 기준(취소 제외)을 쓴다. 일별 합계와 정확히 같아서 화면 안에서 앞뒤가 맞는다.
+     Makuake 공개 페이지는 오늘자라 데이터 기준일보다 앞서 갈 수 있다(FIGURES.public 참고). */
+  const revenue = FIGURES.confirmed.amount;
+  const units   = FIGURES.confirmed.orders;
 
   /* 광고비 = 자체 Meta(원화 실측을 엔화 환산) + Makuake 대행(추정) */
   const rate      = CONFIG.fx.krwPerJpy;
@@ -69,7 +70,7 @@ const CALC = (() => {
 
   /* ── 전환율 ──────────────────────────────────── */
   const cvr = FIGURES.analytics.pageViews
-    ? (FIGURES.analytics.orders / FIGURES.analytics.pageViews) * 100
+    ? (FIGURES.confirmed.orders / FIGURES.analytics.pageViews) * 100
     : 0;
 
   /* ── 자체 Meta 광고 지표 ─────────────────────── */

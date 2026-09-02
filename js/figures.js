@@ -14,11 +14,20 @@ const FIGURES = {
     makuakeGoal: 100000           // Makuake 형식 목표액 (엔)
   },
 
-  /* 애널리틱스 누적. 결제 대기분이 포함되어 공개 수치보다 1건(¥29,900) 많다. */
+  /* 애널리틱스 누적.
+     주의 — 애널리틱스의 금액·건수는 '신청' 기준이라 취소·미결제분이 섞여 있다.
+     매출과 건수는 아래 confirmed(확정 기준)를 쓰고, 여기서는 pageViews 만 쓴다. */
   analytics: {
-    amount: 726000,
-    orders: 20,
-    pageViews: 16024
+    pageViews: 16024,
+    applications: 20,          // 참고용 (취소 포함)
+    applicationAmount: 726000  // 참고용 (취소 포함)
+  },
+
+  /* 확정 기준 누적. daily 의 합과 같아야 한다.
+     출처: 사용자 정리 시트(신청일 기준) · Makuake 서포터 목록과 대조 완료. */
+  confirmed: {
+    amount: 666200,
+    orders: 18
   },
 
   /* 광고비. 두 갈래로 나눠 담는다.
@@ -102,16 +111,18 @@ const FIGURES = {
   },
 
   /* 일별 실적. 누적값의 차이로 산출했다. */
+  /* 일별.
+     amount/orders  — 확정 기준(취소 제외), 신청일 기준. 출처: 사용자 정리 시트.
+     organic*       — 그중 광고와 무관하게 들어온 건.
+     pageViews      — Makuake 애널리틱스. */
   daily: [
-    { date: '2026-08-19', amount: 121700, pageViews: 2721, orders: 3 },
+    { date: '2026-08-19', amount: 121700, pageViews: 2721, orders: 3, organicOrders: 2, organicAmount: 91800 },
     { date: '2026-08-20', amount: 29900,  pageViews: 1610, orders: 1 },
     { date: '2026-08-21', amount: 29900,  pageViews: 1509, orders: 1 },
-    { date: '2026-08-22', amount: 89700,  pageViews: 1713, orders: 3 },
+    { date: '2026-08-22', amount: 59800,  pageViews: 1713, orders: 2 },
     { date: '2026-08-23', amount: 29900,  pageViews: 1252, orders: 1 },
-    /* organicOrders/organicAmount — 광고와 무관하게 들어온 건. 사용자 확인 값이다.
-       금액은 Makuake 서포터 목록의 건별 금액에서 확인했다(8/25는 ¥61,900 x 3건). */
     { date: '2026-08-24', amount: 29900,  pageViews: 1361, orders: 1, organicOrders: 1, organicAmount: 29900 },
-    { date: '2026-08-25', amount: 215600, pageViews: 1433, orders: 4, organicOrders: 4, organicAmount: 215600 },
+    { date: '2026-08-25', amount: 185700, pageViews: 1433, orders: 3, organicOrders: 3, organicAmount: 185700 },
     { date: '2026-08-26', amount: 0,      pageViews: 1643, orders: 0 },
     { date: '2026-08-27', amount: 59800,  pageViews: 801,  orders: 2 },
     { date: '2026-08-28', amount: 29900,  pageViews: 461,  orders: 1 },
@@ -138,10 +149,10 @@ const FIGURES = {
       { amount: 121700, pageViews: 2721, orders: 3 },
       { amount: 29900,  pageViews: 1610, orders: 1 },
       { amount: 29900,  pageViews: 1509, orders: 1 },
-      { amount: 89700,  pageViews: 1713, orders: 3 },
+      { amount: 59800,  pageViews: 1713, orders: 2 },
       { amount: 29900,  pageViews: 1252, orders: 1 },
       { amount: 29900,  pageViews: 1361, orders: 1 },
-      { amount: 215600, pageViews: 1433, orders: 4 },
+      { amount: 185700, pageViews: 1433, orders: 3 },
       { amount: 0,      pageViews: 1643, orders: 0 },
       { amount: 59800,  pageViews: 801,  orders: 2 },
       { amount: 29900,  pageViews: 461,  orders: 1 },
@@ -154,7 +165,7 @@ const FIGURES = {
 
   /* 비교용 과거 프로젝트. 각 프로젝트 애널리틱스의 전체 기간 누적값. */
   compare: [
-    { id: '140182', start: '2026-08-19', end: '2026-09-15', amount: 726000,   pageViews: 16024,  orders: 20,   ongoing: true },
+    { id: '140182', start: '2026-08-19', end: '2026-09-15', amount: 666200,   pageViews: 16024,  orders: 18,   ongoing: true },
     { id: '136500', start: '2026-04-14', end: '2026-05-30', amount: 921700,   pageViews: 13847,  orders: 23 },
     { id: '126886', start: '2025-05-29', end: '2025-07-30', amount: 24356200, pageViews: 129988, orders: 1086 },
     { id: '123556', start: '2025-02-12', end: '2025-03-28', amount: 5100400,  pageViews: 27571,  orders: 316 },

@@ -54,7 +54,7 @@ function buildFindings() {
     add('info', '문제는 트래픽 양이 아닙니다',
       `RIKO 페이지 조회 ${fmt.int(FIGURES.analytics.pageViews)}회는 ` +
       `${esc(lbl ? lbl.short : similar.id)}(${fmt.int(similar.pageViews)}회)보다 많습니다. ` +
-      `그런데 신청은 ${FIGURES.analytics.orders}건 대 ${similar.orders}건입니다.`,
+      `그런데 확정 신청은 ${FIGURES.confirmed.orders}건 대 ${similar.orders}건입니다.`,
       '같은 사람 수를 데려와도 신청으로 안 넘어갑니다. 리워드 구성·가격 제시·페이지 상단 설득이 점검 대상입니다.');
   }
 

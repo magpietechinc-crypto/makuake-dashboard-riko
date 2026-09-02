@@ -107,7 +107,7 @@ function renderOverview(el) {
         ${card('예상 최종 금액', fmt.money(C.forecast),
                `최근 ${CONFIG.forecastWindowDays}일 평균 ${fmt.money(C.recentAvg)}/일 × 잔여 ${C.remainDays}일`)}
         ${card('페이지 조회수', fmt.int(FIGURES.analytics.pageViews) + '회', `일평균 ${fmt.int(FIGURES.analytics.pageViews / C.elapsedDays)}회`)}
-        ${card('전환율', fmt.pct(C.cvr, 2), `조회 ${fmt.int(FIGURES.analytics.pageViews)}회 대비 신청 ${fmt.int(FIGURES.analytics.orders)}건`)}
+        ${card('전환율', fmt.pct(C.cvr, 2), `조회 ${fmt.int(FIGURES.analytics.pageViews)}회 대비 확정 신청 ${fmt.int(FIGURES.confirmed.orders)}건`)}
       </div>
     </div>
     <div class="section">${chart}</div>

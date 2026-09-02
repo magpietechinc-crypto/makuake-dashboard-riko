@@ -53,19 +53,15 @@ function renderFunding(el) {
         <tbody>${rows}</tbody>
         <tfoot><tr>
           <td>합계</td>
-          <td>${fmt.money(FIGURES.analytics.amount)}</td>
-          <td>${fmt.int(FIGURES.analytics.orders)}건</td>
+          <td>${fmt.money(FIGURES.confirmed.amount)}</td>
+          <td>${fmt.int(FIGURES.confirmed.orders)}건</td>
           <td>${fmt.int(FIGURES.analytics.pageViews)}회</td>
           <td>${fmt.pct(CALC.cvr, 2)}</td>
         </tr></tfoot>
       </table>
     </div>
     <p class="hint" style="margin-top:10px">
-      표의 합계는 애널리틱스 기준 ${fmt.money(FIGURES.analytics.amount)}(${FIGURES.analytics.orders}건)입니다.
-      상단 카드의 대표 금액 ${fmt.money(FIGURES.public.amount)}(${FIGURES.public.supporters}건)와
-      ${fmt.money(FIGURES.analytics.amount - FIGURES.public.amount)} 차이가 나는데,
-      결제가 아직 확정되지 않은 1건이 애널리틱스에만 잡혀 있기 때문입니다.
-    </p>`;
+      표의 매출·건수는 <strong>확정 기준</strong>(취소 제외, 신청일 기준)이고 페이지 조회수는 애널리틱스 기준입니다. 애널리틱스의 신청 수치(${FIGURES.analytics.applications}건 / ${fmt.money(FIGURES.analytics.applicationAmount)})에는 취소·미결제분이 섞여 있어 쓰지 않았습니다. Makuake 공개 페이지는 오늘자라 ${fmt.money(FIGURES.public.amount)}(${FIGURES.public.supporters}명)로 앞서 있을 수 있습니다.</p>`;
 
   el.innerHTML = `
     <div class="section">${kpi}</div>
