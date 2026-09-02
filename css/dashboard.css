@@ -126,6 +126,32 @@ tfoot tr { border-top: 2px solid var(--border-secondary); font-weight: 700; }
 .pl td.n { text-align: right; white-space: nowrap; }
 .pl td.p { text-align: right; color: var(--text-tertiary); font-size: 12px; white-space: nowrap; }
 
+/* ── 광고 주체별 블록 ─────────────────────────── */
+/* 자체 집행과 대행을 색과 테두리로 확실히 갈라놓는다. */
+.ad-block {
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border-tertiary);
+  border-left: 5px solid var(--ad-accent);
+  background: var(--ad-bg);
+  padding: 18px 18px 20px;
+  margin-bottom: 20px;
+}
+.ad-block.self   { --ad-accent: #D85A30; --ad-bg: #FCF4F0; --ad-badge-bg: #F6DCD1; --ad-badge-fg: #4A1B0C; }
+.ad-block.agency { --ad-accent: #5A7D95; --ad-bg: #F1F5F8; --ad-badge-bg: #D8E4EC; --ad-badge-fg: #1B3547; }
+
+.ad-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.ad-head h2 { font-size: 17px; font-weight: 700; margin: 0; }
+.ad-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  background: var(--ad-badge-bg); color: var(--ad-badge-fg);
+}
+.ad-sub { font-size: 12px; color: var(--text-secondary); margin: 0 0 14px; }
+.ad-block .card { border-color: rgba(0,0,0,0.06); }
+.ad-block .grid { margin-bottom: 12px; }
+.ad-block .grid:last-of-type { margin-bottom: 0; }
+.ad-extra { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border-secondary); }
+.ad-extra > p { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 0 0 10px; }
+
 /* ── 소재 카드 ────────────────────────────────── */
 .creative-card { display: flex; gap: 14px; align-items: flex-start; }
 .creative-card .creative-body { flex: 1 1 auto; min-width: 0; }

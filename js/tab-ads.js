@@ -13,36 +13,55 @@ function renderAds(el) {
   const card = (label, value, sub) => `
     <div class="card"><p class="label">${label}</p><p class="value">${value}</p>${sub ? `<p class="sub">${sub}</p>` : ''}</div>`;
 
-  const head = `
-    <div class="card" style="margin-bottom:12px">
-      <p class="label">자체 집행 Meta 광고 <span class="tag">집행 종료</span></p>
-      <p class="value sm">${fmt.md(m.runStart)} ~ ${fmt.md(m.runEnd)} · ${A.runDays}일</p>
-      <p class="sub">${esc(m.campaign)} · 현재 중단 상태입니다. 이후 광고는 Makuake 대행으로 넘어갔습니다.</p>
-    </div>`;
+  /* ── 두 광고를 같은 지표 구성으로 그린다 ─────── */
+  const S = CALC.selfRun;
 
-  /* ── 최상단 지표 8개 ─────────────────────────── */
-  const kpi = `
-    <div class="grid g4" style="margin-bottom:12px">
-      ${card('광고비', fmt.money(A.spendJpy), `${fmt.moneyAlt(A.spendJpy)} · 일평균 ${fmt.money(A.spendJpy / A.runDays)}`)}
-      ${card('노출', fmt.int(A.impressions), `도달 ${fmt.int(A.reach)} · 1인당 ${A.frequency.toFixed(2)}회`)}
-      ${card('클릭 수', fmt.int(A.linkClicks), `CTR ${fmt.pct(A.ctr, 2)}`)}
-      ${card('트래픽', fmt.int(A.traffic), `클릭 중 ${fmt.pct(A.landingRate)}가 페이지 도달`)}
+  /* 공통 지표 10개. 어느 쪽이든 같은 순서, 같은 이름으로 나온다. */
+  const metricCards = (x) => `
+    <div class="grid g4">
+      ${card('광고비', fmt.money(x.cost), x.costSub)}
+      ${card('노출', fmt.int(x.impressions), x.impSub)}
+      ${card('클릭', fmt.int(x.clicks), `CTR ${fmt.pct(x.ctr, 2)}`)}
+      ${card('CTR', fmt.pct(x.ctr, 2), '노출 대비 클릭 비율')}
     </div>
     <div class="grid g4">
-      ${card('CPM', fmt.moneyFine(A.cpmJpy), '노출 1,000회당 비용')}
-      ${card('CPC', fmt.moneyFine(A.cpcJpy), '클릭 1회당 비용')}
-      ${card('CPL', fmt.moneyFine(A.cplJpy), '트래픽 1회당 비용')}
-      ${card('CVR', fmt.pct(A.cvr, 2),
-             `트래픽 ${fmt.int(A.traffic)}회 → 광고 기여 신청 ${A.orders}건<br>
-              <span style="color:var(--text-tertiary)">기간 총 ${A.ordersAll}건에서 오가닉 ${A.organicOrders}건 제외</span>`)}
+      ${card('CPM', fmt.moneyFine(x.cpm), '노출 1,000회당 비용')}
+      ${card('CPC', fmt.moneyFine(x.cpc), '클릭 1회당 비용')}
+      ${card('CVR', fmt.pct(x.cvr, 3), `클릭 ${fmt.int(x.clicks)}회 → 전환 ${x.conv}건`)}
+      ${card('CPA', fmt.money(x.cpa), `전환 1건당 광고비`)}
+    </div>
+    <div class="grid g2">
+      ${card('광고 매출액', fmt.money(x.revenue), x.revenueSub)}
+      ${card('ROAS', fmt.pct(x.roas, 1), `광고 매출액 ÷ 광고비`)}
     </div>`;
 
-  const kpi2 = `
-    <div class="grid g2">
-      ${card('신청 1건당 광고비', fmt.moneyFine(A.cpaJpy),
-             `광고 기여 ${A.orders}건 기준 · 건당 매출의 ${fmt.pct(A.cpaShare)}`)}
-      ${card('클릭 → 트래픽 도달률', fmt.pct(A.landingRate),
-             `클릭 ${fmt.int(A.linkClicks)}회 중 ${fmt.int(A.traffic)}회 도달`)}
+  const selfBlock = `
+    <div class="ad-block self">
+      <div class="ad-head">
+        <span class="ad-badge">자체 집행</span>
+        <h2>자체 Meta 광고</h2>
+        <span class="tag">집행 종료</span>
+      </div>
+      <p class="ad-sub">
+        ${fmt.md(m.runStart)} ~ ${fmt.md(m.runEnd)} · ${A.runDays}일 · ${esc(m.campaign)}<br>
+        전환은 <strong>오가닉 ${S.organicOrders}건(${fmt.money(S.organicAmount)})을 뺀 광고 기여분</strong>입니다.
+      </p>
+      ${metricCards({
+        cost: S.costJpy, costSub: `${fmt.moneyAlt(S.costJpy)} · 일평균 ${fmt.money(S.costJpy / A.runDays)}`,
+        impressions: S.impressions, impSub: `도달 ${fmt.int(A.reach)} · 1인당 ${A.frequency.toFixed(2)}회`,
+        clicks: S.clicks, ctr: S.ctr, cpm: S.cpmJpy, cpc: S.cpcJpy,
+        cvr: S.cvrClicks, conv: S.adOrders, cpa: S.cpaJpy,
+        revenue: S.adAmountJpy, revenueSub: `기간 총 ${fmt.money(S.amountJpy)}에서 오가닉 제외`,
+        roas: S.roas
+      })}
+      <div class="ad-extra">
+        <p>자체 Meta 광고에만 있는 지표</p>
+        <div class="grid g3">
+          ${card('트래픽', fmt.int(A.traffic), '광고를 눌러 실제로 페이지가 열린 횟수')}
+          ${card('CPL', fmt.moneyFine(A.cplJpy), '트래픽 1회당 비용')}
+          ${card('클릭 → 트래픽 도달률', fmt.pct(A.landingRate), `클릭 ${fmt.int(S.clicks)}회 중 ${fmt.int(A.traffic)}회 도달`)}
+        </div>
+      </div>
     </div>`;
 
   /* ── 광고 중단 전후 ──────────────────────────── */
@@ -77,21 +96,37 @@ function renderAds(el) {
   /* ── Makuake 대행 광고 ──────────────────────── */
   const G = CALC.agency;
   const V = CALC.adVs;
-  const S = CALC.selfRun;
   const agencyBlock = !G ? '' : `
-    <div class="section">
-      <h2>Makuake 대행 광고</h2>
-      <p class="hint">
-        주간 리포트 <strong>${esc(G.reportFile)}</strong> 기준 ·
-        ${fmt.md(G.weekFrom)} ~ ${fmt.md(G.weekTo)} 중 ${G.deliveryDays}일 집행 ·
-        게재 예정 종료 ${fmt.md(G.plannedEnd)}
-      </p>
-      <div class="grid g4" style="margin-bottom:12px">
-        ${card('광고비', fmt.money(G.costJpy), `${fmt.moneyAlt(G.costJpy)} · 예산 소진율 ${fmt.pct(G.totals.budgetUsePct)}`)}
-        ${card('전환 (cv)', fmt.int(G.cv) + '건', `Makuake 애널리틱스 같은 기간 신청 건수와 일치`)}
-        ${card('CPA', fmt.money(G.cpaJpy), `상한 ${fmt.money(G.capCpaJpy)} 대비 <span class="neg">+${fmt.pct(G.capOverPct, 0)}</span>`)}
-        ${card('ROAS', fmt.pct(G.roas, 1), `응원 금액 ${fmt.money(G.amountJpy)}`)}
+    <div class="ad-block agency">
+      <div class="ad-head">
+        <span class="ad-badge">대행</span>
+        <h2>Makuake 대행 광고</h2>
+        <span class="tag">집행 중</span>
       </div>
+      <p class="ad-sub">
+        ${fmt.md(G.weekFrom)} ~ ${fmt.md(G.weekTo)} 중 ${G.deliveryDays}일 집행 · 게재 예정 종료 ${fmt.md(G.plannedEnd)}<br>
+        주간 리포트 <strong>${esc(G.reportFile)}</strong> 기준 · 전환·매출액은 대행사가 낸 값이며 오가닉 구분이 없습니다.
+      </p>
+      ${metricCards({
+        cost: G.costJpy, costSub: `${fmt.moneyAlt(G.costJpy)} · 예산 소진율 ${fmt.pct(G.totals.budgetUsePct)}`,
+        impressions: G.impressions, impSub: `매체 ${G.media.filter(x => x.impressions > 0).length}곳 합계`,
+        clicks: G.clicks, ctr: G.ctr, cpm: G.cpmJpy, cpc: G.cpcJpy,
+        cvr: G.cvrClicks, conv: G.cv, cpa: G.cpaJpy,
+        revenue: G.amountJpy, revenueSub: `리포트의 応援金額 · 같은 기간 확정 매출과 일치`,
+        roas: G.roas
+      })}
+      <div class="ad-extra">
+        <p>Makuake 대행 광고에만 있는 지표</p>
+        <div class="grid g2">
+          ${card('상한 CPA', fmt.money(G.capCpaJpy),
+                 `실제 ${fmt.money(G.cpaJpy)} · <span class="neg">${fmt.pct(G.capOverPct, 0)} 초과</span>`)}
+          ${card('예산 소진율', fmt.pct(G.totals.budgetUsePct), `게재 예정 종료 ${fmt.md(G.plannedEnd)}까지`)}
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>대행 광고 매체별</h2>
       <div class="table-wrap">
         <table>
           <thead><tr>
@@ -143,7 +178,7 @@ function renderAds(el) {
                 <td>${V.self.adOrders}건 <span style="color:var(--text-tertiary)">(총 ${V.self.orders}건 − 오가닉 ${V.self.organicOrders}건)</span></td>
                 <td>${V.agency.orders}건</td>
                 <td class="${V.agency.orders < V.self.adOrders ? 'neg' : 'pos'}">${(V.agency.orders / V.self.adOrders * 100 - 100).toFixed(0)}%</td></tr>
-            <tr><td>펀딩 금액</td>
+            <tr><td>광고 매출액</td>
                 <td>${fmt.money(V.self.adAmountJpy)} <span style="color:var(--text-tertiary)">(총 ${fmt.money(V.self.amountJpy)} − 오가닉 ${fmt.money(V.self.organicAmount)})</span></td>
                 <td>${fmt.money(V.agency.amountJpy)}</td>
                 <td class="${V.agency.amountJpy < V.self.adAmountJpy ? 'neg' : 'pos'}">${(V.agency.amountJpy / V.self.adAmountJpy * 100 - 100).toFixed(0)}%</td></tr>
@@ -246,8 +281,7 @@ function renderAds(el) {
     </p>`;
 
   el.innerHTML = `
-    <div class="section">${head}${kpi}</div>
-    <div class="section">${kpi2}</div>
+    <div class="section">${selfBlock}</div>
     ${agencyBlock}
     <div class="section">
       <h2>자체 광고에서 대행으로 넘어간 뒤</h2>
