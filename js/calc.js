@@ -178,11 +178,23 @@ const CALC = (() => {
      대행사는 '기간 총계'를 광고 성과로 잡았으므로(리포트의 cv 6건·¥179,400 이
      Makuake 애널리틱스의 같은 기간 실적과 정확히 일치), 자체 Meta 쪽도 같은 기준으로 낸다. */
   const ag = FIGURES.agencyAds;
+  /* 매체 3개를 합쳐 전체 노출·클릭을 낸다. 리포트에는 매체별로만 있다. */
+  const agImp = ag ? ag.media.reduce((s, x) => s + (x.impressions || 0), 0) : 0;
+  const agClk = ag ? ag.media.reduce((s, x) => s + (x.clicks || 0), 0) : 0;
   const agency = ag ? {
     ...ag,
     costJpy: ag.totals.costJpy,
     cv: ag.totals.cv,
     amountJpy: ag.totals.amountJpy,
+    impressions: agImp,
+    clicks: agClk,
+    cpmJpy: agImp ? (ag.totals.costJpy / agImp) * 1000 : 0,
+    cpcJpy: agClk ? ag.totals.costJpy / agClk : 0,
+    ctr:    agImp ? (agClk / agImp) * 100 : 0,
+    /* 대행 리포트에는 랜딩 도달(트래픽) 지표가 없어 CPL 을 낼 수 없다. */
+    cplJpy: null,
+    /* 대행사 정의와 같은 '클릭 대비 전환율' */
+    cvrClicks: agClk ? (ag.totals.cv / agClk) * 100 : 0,
     cpaJpy: ag.totals.cv ? ag.totals.costJpy / ag.totals.cv : 0,
     roas: ag.totals.costJpy ? (ag.totals.amountJpy / ag.totals.costJpy) * 100 : 0,
     /* 상한 CPA 대비 얼마나 넘었나 */
@@ -205,6 +217,15 @@ const CALC = (() => {
   };
   selfRun.cpaJpy = selfRun.adOrders ? metaJpy / selfRun.adOrders : 0;
   selfRun.roas   = metaJpy ? (selfRun.adAmountJpy / metaJpy) * 100 : 0;
+  /* 대행과 같은 잣대(클릭 대비 전환율). 대시보드 다른 곳의 CVR(신청/트래픽)과는 분모가 다르다. */
+  selfRun.impressions = mt.impressions;
+  selfRun.clicks      = mt.linkClicks;
+  selfRun.traffic     = mt.lpv;
+  selfRun.cpmJpy      = ads.cpmJpy;
+  selfRun.cpcJpy      = ads.cpcJpy;
+  selfRun.cplJpy      = ads.cplJpy;
+  selfRun.ctr         = ads.ctr;
+  selfRun.cvrClicks   = mt.linkClicks ? (selfRun.adOrders / mt.linkClicks) * 100 : 0;
   /* 참고용: 오가닉을 빼지 않은 기간 총계 기준 */
   selfRun.cpaAllJpy = period.on.orders ? metaJpy / period.on.orders : 0;
   selfRun.roasAll   = metaJpy ? (period.on.amount / metaJpy) * 100 : 0;

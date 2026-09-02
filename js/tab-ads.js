@@ -77,6 +77,7 @@ function renderAds(el) {
   /* ── Makuake 대행 광고 ──────────────────────── */
   const G = CALC.agency;
   const V = CALC.adVs;
+  const S = CALC.selfRun;
   const agencyBlock = !G ? '' : `
     <div class="section">
       <h2>Makuake 대행 광고</h2>
@@ -157,6 +158,44 @@ function renderAds(el) {
           </tbody>
         </table>
       </div>
+
+      <h3 style="font-size:15px;margin:22px 0 10px">단가·효율 지표</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th></th><th>자체 Meta</th><th>Makuake 대행</th><th>차이</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>노출</td><td>${fmt.int(S.impressions)}</td><td>${fmt.int(G.impressions)}</td>
+                <td>${(G.impressions / S.impressions).toFixed(1)}배</td></tr>
+            <tr><td>클릭</td><td>${fmt.int(S.clicks)}</td><td>${fmt.int(G.clicks)}</td>
+                <td>${(G.clicks / S.clicks * 100 - 100).toFixed(0)}%</td></tr>
+            <tr><td>CTR</td><td>${fmt.pct(S.ctr, 2)}</td><td>${fmt.pct(G.ctr, 2)}</td>
+                <td class="pos">자체가 ${(S.ctr / G.ctr).toFixed(1)}배 높음</td></tr>
+            <tr><td><strong>CPM</strong></td><td>${fmt.moneyFine(S.cpmJpy)}</td><td>${fmt.moneyFine(G.cpmJpy)}</td>
+                <td class="neg">대행이 ${(G.cpmJpy / S.cpmJpy).toFixed(1)}배 비쌈</td></tr>
+            <tr><td><strong>CPC</strong></td><td>${fmt.moneyFine(S.cpcJpy)}</td><td>${fmt.moneyFine(G.cpcJpy)}</td>
+                <td class="neg">대행이 ${(G.cpcJpy / S.cpcJpy).toFixed(1)}배 비쌈</td></tr>
+            <tr><td><strong>CPL</strong></td><td>${fmt.moneyFine(S.cplJpy)}</td>
+                <td style="color:var(--text-tertiary)">—</td>
+                <td style="color:var(--text-tertiary)">대행 리포트에 트래픽 지표 없음</td></tr>
+            <tr><td><strong>CVR</strong> <span style="color:var(--text-tertiary);font-weight:400">(클릭 대비)</span></td>
+                <td>${fmt.pct(S.cvrClicks, 3)}</td><td>${fmt.pct(G.cvrClicks, 3)}</td>
+                <td class="pos">대행이 ${(G.cvrClicks / S.cvrClicks).toFixed(1)}배 높음</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="hint" style="margin-top:10px">
+        <strong>CVR은 여기서만 '클릭 대비'로 계산했습니다.</strong>
+        대행 리포트에 랜딩 도달(트래픽) 지표가 없어 양쪽이 함께 가진 클릭을 분모로 맞췄습니다.
+        다른 탭의 CVR(${fmt.pct(CALC.ads.cvr, 2)})은 트래픽을 분모로 쓴 값이라 숫자가 다릅니다.
+        같은 이유로 CPL은 자체 Meta만 낼 수 있습니다.
+      </p>
+      <p class="hint">
+        읽는 법 — 자체 광고는 <strong>싸고 클릭을 많이</strong> 모았지만 그 클릭이 신청으로 잘 안 넘어갔고,
+        대행 광고는 <strong>비싸고 클릭은 적지만</strong> 그 클릭이 신청으로 더 잘 넘어갔습니다.
+        결과적으로 두 기간 모두 6건 · ${fmt.money(V.agency.amountJpy)}로 같고, 든 돈만 ${V.costRatio.toFixed(1)}배 차이입니다.
+      </p>
       <p class="hint" style="margin-top:10px">
         오가닉을 빼지 않은 기간 총계로 보면 자체 Meta는 신청 ${V.self.orders}건 ·
         건당 ${fmt.money(V.self.cpaAllJpy)} · ROAS ${fmt.pct(V.self.roasAll, 0)}입니다.
@@ -217,8 +256,11 @@ function renderAds(el) {
     <div class="section">
       <div class="chart-card">
         <div class="chart-head">
-          <h3>일별 광고비와 트래픽</h3>
-          <p class="hint">막대는 광고비, 선은 광고로 페이지가 열린 횟수입니다.</p>
+          <h3>일별 광고비와 페이지 조회수</h3>
+          <p class="hint">
+            8월 26일부터 Makuake 대행으로 넘어갔습니다. 세로 점선이 그 지점입니다.
+            대행 구간 막대는 <strong>주간 총액을 일수로 나눈 평균</strong>입니다 — 대행 리포트가 주 단위로만 오기 때문입니다.
+          </p>
         </div>
         <div class="chart-box"><canvas id="ch-ads-daily"></canvas></div>
       </div>
@@ -229,28 +271,75 @@ function renderAds(el) {
 }
 
 function drawAdsChart() {
-  const d = CALC.ads.daily;
+  /* x축은 전체 기간(자체 + 대행). 자체는 일별 실측, 대행은 주간 총액의 일평균이다. */
+  const days = FIGURES.daily;                 // 8/19 ~ 데이터 마지막 날
+  const G = CALC.agency;
+  const m = FIGURES.metaAds;
   const conv = j => CURRENCY === 'KRW' ? j * CONFIG.fx.krwPerJpy : j;
   const sym = CURRENCY === 'KRW' ? '₩' : '¥';
+
+  /* 자체 Meta 일별 광고비 */
+  const metaByDate = {};
+  CALC.ads.daily.forEach(x => { metaByDate[x.date] = x.spendJpy; });
+
+  /* 대행: 주간 총액을 리포트 주간의 날짜 수로 나눠 고르게 편다 */
+  const agDays = G ? days.filter(d => d.date >= G.weekFrom && d.date <= G.weekTo) : [];
+  const agPerDay = (G && agDays.length) ? G.costJpy / agDays.length : 0;
+
+  const selfBars = days.map(d => (metaByDate[d.date] != null ? conv(metaByDate[d.date]) : null));
+  const agBars = days.map(d => (G && d.date >= G.weekFrom && d.date <= G.weekTo ? conv(agPerDay) : null));
+
+  /* 대행 전환 지점 = 자체 마지막 집행일과 그다음 날 사이 */
+  const switchIdx = days.findIndex(d => d.date > m.runEnd);
+
+  const switchLine = {
+    id: 'switchLine',
+    afterDatasetsDraw(chart) {
+      if (switchIdx <= 0) return;
+      const x = chart.scales.x;
+      const px = x.getPixelForValue(switchIdx) - (x.getPixelForValue(1) - x.getPixelForValue(0)) / 2;
+      const { top, bottom } = chart.chartArea;
+      const g = chart.ctx;
+      g.save();
+      g.setLineDash([5, 4]);
+      g.strokeStyle = '#5F5E5A';
+      g.lineWidth = 1.5;
+      g.beginPath(); g.moveTo(px, top); g.lineTo(px, bottom); g.stroke();
+      g.setLineDash([]);
+      g.fillStyle = '#5F5E5A';
+      g.font = '600 11px ' + getComputedStyle(document.body).fontFamily;
+      g.textAlign = 'left';
+      g.fillText('▶ Makuake 대행 전환', px + 6, top + 12);
+      g.restore();
+    }
+  };
 
   makeChart('ch-ads-daily', {
     type: 'bar',
     data: {
-      labels: d.map(x => fmt.short(x.date)),
+      labels: days.map(x => fmt.short(x.date)),
       datasets: [
-        { type: 'bar', label: '광고비', data: d.map(x => conv(x.spendJpy)),
-          backgroundColor: '#D85A30', borderRadius: 4, yAxisID: 'y', order: 2 },
-        { type: 'line', label: '트래픽', data: d.map(x => x.traffic),
+        { type: 'bar', label: '자체 Meta 광고비', data: selfBars,
+          backgroundColor: '#D85A30', borderRadius: 4, yAxisID: 'y', order: 3 },
+        { type: 'bar', label: 'Makuake 대행 광고비 (일평균)', data: agBars,
+          backgroundColor: '#8FA8B8', borderRadius: 4, yAxisID: 'y', order: 3 },
+        { type: 'line', label: '페이지 조회수', data: days.map(x => x.pageViews),
           borderColor: '#0F6E56', backgroundColor: '#0F6E56', borderWidth: 2,
           pointRadius: 3, tension: 0.25, yAxisID: 'y1', order: 1 }
       ]
     },
-    options: chartOptions({
-      yTick: v => sym + Math.round(v).toLocaleString('ko-KR'),
-      y1: true, y1Tick: v => Math.round(v).toLocaleString('ko-KR') + '회',
-      tip: (l, v) => l === '광고비'
-        ? `${l}: ${sym}${Math.round(v).toLocaleString('ko-KR')}`
-        : `${l}: ${Math.round(v).toLocaleString('ko-KR')}회`
-    })
+    options: (() => {
+      const o = chartOptions({
+        yTick: v => sym + Math.round(v).toLocaleString('ko-KR'),
+        y1: true, y1Tick: v => Math.round(v).toLocaleString('ko-KR') + '회',
+        tip: (l, v) => l === '페이지 조회수'
+          ? `${l}: ${Math.round(v).toLocaleString('ko-KR')}회`
+          : `${l}: ${sym}${Math.round(v).toLocaleString('ko-KR')}`
+      });
+      o.scales.x.stacked = true;
+      o.scales.y.stacked = true;
+      return o;
+    })(),
+    plugins: [switchLine]
   });
 }
