@@ -139,11 +139,18 @@ const CALC = (() => {
   period.viewsDrop  = period.on.viewsPerDay  ? (period.off.viewsPerDay  / period.on.viewsPerDay  - 1) * 100 : 0;
   period.ordersDrop = period.on.ordersPerDay ? (period.off.ordersPerDay / period.on.ordersPerDay - 1) * 100 : 0;
 
-  /* CVR = 신청 / 트래픽. 신청은 Makuake 쪽 수치, 트래픽은 Meta 쪽 수치라 출처가 다르다.
-     Meta 가 데려온 방문이 신청으로 얼마나 이어졌는지 보는 용도다. */
-  ads.cvr    = mt.lpv ? (period.on.orders / mt.lpv) * 100 : 0;
-  ads.orders = period.on.orders;
-  ads.cpaJpy = period.on.orders ? metaJpy / period.on.orders : 0;
+  /* 오가닉으로 확인된 건. 광고 기여분을 셀 때 뺀다. */
+  const onRows = FIGURES.daily.filter(d => d.date >= m.runStart && d.date <= m.runEnd);
+  const organicOrders = onRows.reduce((s, d) => s + (d.organicOrders || 0), 0);
+  const organicAmount = onRows.reduce((s, d) => s + (d.organicAmount || 0), 0);
+  const adOrders = period.on.orders - organicOrders;
+
+  /* CVR = 광고 기여 신청 / 트래픽. 신청은 Makuake 쪽, 트래픽은 Meta 쪽 수치다. */
+  ads.cvr    = mt.lpv ? (adOrders / mt.lpv) * 100 : 0;
+  ads.orders = adOrders;
+  ads.ordersAll = period.on.orders;
+  ads.organicOrders = organicOrders;
+  ads.cpaJpy = adOrders ? metaJpy / adOrders : 0;
   /* 신청 1건이 만드는 매출 대비 광고비 비중 */
   ads.cpaShare = avgUnitPrice ? (ads.cpaJpy / avgUnitPrice) * 100 : 0;
 
@@ -181,15 +188,25 @@ const CALC = (() => {
     capOverPct: ag.capCpaJpy ? ((ag.totals.costJpy / ag.totals.cv) / ag.capCpaJpy - 1) * 100 : 0
   } : null;
 
-  /* 자체 Meta 기간(8/19~8/25)을 같은 기준으로 환산 */
+  /* 자체 Meta 기간(8/19~8/25).
+     오가닉으로 확인된 건은 빼고 '광고 기여분'을 따로 낸다.
+     기간 총계 기준도 함께 남겨 두 잣대를 나란히 보여준다. */
   const selfRun = {
     costJpy: metaJpy,
-    orders:  period.on.orders,
+    days: period.on.days,
+    /* 기간 총계 */
+    orders: period.on.orders,
     amountJpy: period.on.amount,
-    cpaJpy: period.on.orders ? metaJpy / period.on.orders : 0,
-    roas: metaJpy ? (period.on.amount / metaJpy) * 100 : 0,
-    days: period.on.days
+    /* 오가닉 제외 = 광고 기여분 */
+    organicOrders, organicAmount,
+    adOrders: period.on.orders - organicOrders,
+    adAmountJpy: period.on.amount - organicAmount
   };
+  selfRun.cpaJpy = selfRun.adOrders ? metaJpy / selfRun.adOrders : 0;
+  selfRun.roas   = metaJpy ? (selfRun.adAmountJpy / metaJpy) * 100 : 0;
+  /* 참고용: 오가닉을 빼지 않은 기간 총계 기준 */
+  selfRun.cpaAllJpy = period.on.orders ? metaJpy / period.on.orders : 0;
+  selfRun.roasAll   = metaJpy ? (period.on.amount / metaJpy) * 100 : 0;
 
   /* 두 광고 맞대기 */
   const adVs = agency ? {
@@ -198,6 +215,8 @@ const CALC = (() => {
       costJpy: agency.costJpy, orders: agency.cv, amountJpy: agency.amountJpy,
       cpaJpy: agency.cpaJpy, roas: agency.roas, days: period.off.days
     },
+    /* 자체는 오가닉을 뺀 광고 기여분, 대행은 대행사가 낸 값(기간 총계)이다.
+       대행 쪽 오가닉은 알 수 없으므로, 아래 배수는 대행에 유리한 쪽으로 기운 값이다. */
     cpaRatio:  selfRun.cpaJpy ? agency.cpaJpy / selfRun.cpaJpy : 0,
     roasRatio: agency.roas ? selfRun.roas / agency.roas : 0,
     costRatio: selfRun.costJpy ? agency.costJpy / selfRun.costJpy : 0

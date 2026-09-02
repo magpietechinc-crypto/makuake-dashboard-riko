@@ -108,8 +108,10 @@ const FIGURES = {
     { date: '2026-08-21', amount: 29900,  pageViews: 1509, orders: 1 },
     { date: '2026-08-22', amount: 89700,  pageViews: 1713, orders: 3 },
     { date: '2026-08-23', amount: 29900,  pageViews: 1252, orders: 1 },
-    { date: '2026-08-24', amount: 29900,  pageViews: 1361, orders: 1 },
-    { date: '2026-08-25', amount: 215600, pageViews: 1433, orders: 4 },
+    /* organicOrders/organicAmount — 광고와 무관하게 들어온 건. 사용자 확인 값이다.
+       금액은 Makuake 서포터 목록의 건별 금액에서 확인했다(8/25는 ¥61,900 x 3건). */
+    { date: '2026-08-24', amount: 29900,  pageViews: 1361, orders: 1, organicOrders: 1, organicAmount: 29900 },
+    { date: '2026-08-25', amount: 215600, pageViews: 1433, orders: 4, organicOrders: 4, organicAmount: 215600 },
     { date: '2026-08-26', amount: 0,      pageViews: 1643, orders: 0 },
     { date: '2026-08-27', amount: 59800,  pageViews: 801,  orders: 2 },
     { date: '2026-08-28', amount: 29900,  pageViews: 461,  orders: 1 },

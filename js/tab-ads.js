@@ -32,13 +32,15 @@ function renderAds(el) {
       ${card('CPM', fmt.moneyFine(A.cpmJpy), '노출 1,000회당 비용')}
       ${card('CPC', fmt.moneyFine(A.cpcJpy), '클릭 1회당 비용')}
       ${card('CPL', fmt.moneyFine(A.cplJpy), '트래픽 1회당 비용')}
-      ${card('CVR', fmt.pct(A.cvr, 2), `트래픽 ${fmt.int(A.traffic)}회 → 신청 ${A.orders}건`)}
+      ${card('CVR', fmt.pct(A.cvr, 2),
+             `트래픽 ${fmt.int(A.traffic)}회 → 광고 기여 신청 ${A.orders}건<br>
+              <span style="color:var(--text-tertiary)">기간 총 ${A.ordersAll}건에서 오가닉 ${A.organicOrders}건 제외</span>`)}
     </div>`;
 
   const kpi2 = `
     <div class="grid g2">
       ${card('신청 1건당 광고비', fmt.moneyFine(A.cpaJpy),
-             `집행기 신청 ${A.orders}건 기준 · 건당 매출의 ${fmt.pct(A.cpaShare)}`)}
+             `광고 기여 ${A.orders}건 기준 · 건당 매출의 ${fmt.pct(A.cpaShare)}`)}
       ${card('클릭 → 트래픽 도달률', fmt.pct(A.landingRate),
              `클릭 ${fmt.int(A.linkClicks)}회 중 ${fmt.int(A.traffic)}회 도달`)}
     </div>`;
@@ -120,25 +122,30 @@ function renderAds(el) {
     <div class="section">
       <h2>자체 광고 vs 대행 광고</h2>
       <p class="hint">
-        같은 잣대로 맞췄습니다. 대행사가 기간 총계를 광고 성과로 잡았으므로(리포트의 전환 6건·${fmt.money(G.amountJpy)}가
-        Makuake 애널리틱스의 같은 기간 실적과 정확히 일치), 자체 Meta 쪽도 집행 기간의 총계로 계산했습니다.
-        <strong>둘 다 진짜 귀속이 아니라 기간 총계 기준</strong>이라는 점은 감안해서 보셔야 합니다.
+        자체 Meta 쪽은 <strong>오가닉으로 확인된 ${V.self.organicOrders}건(${fmt.money(V.self.organicAmount)})을 빼고</strong>
+        광고 기여분만 셌습니다. 대행 쪽은 대행사가 낸 값을 그대로 썼는데, 그 값은
+        Makuake 애널리틱스의 같은 기간 총계와 정확히 일치합니다.
+        <strong>즉 대행 숫자에는 오가닉이 섞여 있을 수 있고, 그만큼 아래 배수는 대행에 유리하게 나온 값입니다.</strong>
       </p>
       <div class="table-wrap">
         <table>
           <thead><tr>
             <th></th>
-            <th>자체 Meta<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.on.from)}~${fmt.short(P.on.to)} · ${V.self.days}일</span></th>
-            <th>Makuake 대행<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.off.from)}~${fmt.short(P.off.to)} · ${V.agency.days}일</span></th>
+            <th>자체 Meta<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.on.from)}~${fmt.short(P.on.to)} · ${V.self.days}일 · 오가닉 제외</span></th>
+            <th>Makuake 대행<br><span style="font-weight:400;color:var(--text-tertiary)">${fmt.short(P.off.from)}~${fmt.short(P.off.to)} · ${V.agency.days}일 · 기간 총계</span></th>
             <th>차이</th>
           </tr></thead>
           <tbody>
             <tr><td>광고비</td><td>${fmt.money(V.self.costJpy)}</td><td>${fmt.money(V.agency.costJpy)}</td>
                 <td class="neg">${V.costRatio.toFixed(1)}배</td></tr>
-            <tr><td>신청 건수</td><td>${V.self.orders}건</td><td>${V.agency.orders}건</td>
-                <td class="neg">${(V.agency.orders / V.self.orders * 100 - 100).toFixed(0)}%</td></tr>
-            <tr><td>펀딩 금액</td><td>${fmt.money(V.self.amountJpy)}</td><td>${fmt.money(V.agency.amountJpy)}</td>
-                <td class="neg">${(V.agency.amountJpy / V.self.amountJpy * 100 - 100).toFixed(0)}%</td></tr>
+            <tr><td>신청 건수</td>
+                <td>${V.self.adOrders}건 <span style="color:var(--text-tertiary)">(총 ${V.self.orders}건 − 오가닉 ${V.self.organicOrders}건)</span></td>
+                <td>${V.agency.orders}건</td>
+                <td class="${V.agency.orders < V.self.adOrders ? 'neg' : 'pos'}">${(V.agency.orders / V.self.adOrders * 100 - 100).toFixed(0)}%</td></tr>
+            <tr><td>펀딩 금액</td>
+                <td>${fmt.money(V.self.adAmountJpy)} <span style="color:var(--text-tertiary)">(총 ${fmt.money(V.self.amountJpy)} − 오가닉 ${fmt.money(V.self.organicAmount)})</span></td>
+                <td>${fmt.money(V.agency.amountJpy)}</td>
+                <td class="${V.agency.amountJpy < V.self.adAmountJpy ? 'neg' : 'pos'}">${(V.agency.amountJpy / V.self.adAmountJpy * 100 - 100).toFixed(0)}%</td></tr>
             <tr><td><strong>신청 1건당 광고비</strong></td>
                 <td><strong>${fmt.money(V.self.cpaJpy)}</strong></td>
                 <td><strong>${fmt.money(V.agency.cpaJpy)}</strong></td>
@@ -150,6 +157,10 @@ function renderAds(el) {
           </tbody>
         </table>
       </div>
+      <p class="hint" style="margin-top:10px">
+        오가닉을 빼지 않은 기간 총계로 보면 자체 Meta는 신청 ${V.self.orders}건 ·
+        건당 ${fmt.money(V.self.cpaAllJpy)} · ROAS ${fmt.pct(V.self.roasAll, 0)}입니다.
+      </p>
     </div>`;
 
   /* ── 일별 상세 ───────────────────────────────── */

@@ -65,10 +65,13 @@ function buildFindings() {
       `도달률 ${fmt.pct(A.landingRate)}입니다.`,
       '클릭 후 이탈은 크지 않습니다. 로딩이나 링크 문제는 아닙니다.');
   }
-  if (A.cpaShare > 0 && A.cpaShare <= T.cpaShareOk) {
-    add('good', '신청 1건을 만드는 광고비는 과하지 않았습니다',
-      `집행기 신청 ${P.on.orders}건, 광고비 ${fmt.money(A.spendJpy)} → 건당 ${fmt.moneyFine(A.cpaJpy)}. ` +
-      `신청 1건 평균 매출 ${fmt.money(CALC.avgUnitPrice)}의 ${fmt.pct(A.cpaShare)}입니다.`,
+  const S = CALC.selfRun;
+  const cpaShareAd = CALC.avgUnitPrice ? (S.cpaJpy / CALC.avgUnitPrice) * 100 : 0;
+  if (cpaShareAd > 0 && cpaShareAd <= T.cpaShareOk) {
+    add('good', '자체 Meta 광고의 신청 1건당 비용은 과하지 않았습니다',
+      `광고비 ${fmt.money(S.costJpy)}로 광고 기여 ${S.adOrders}건 → 건당 ${fmt.money(S.cpaJpy)}. ` +
+      `신청 1건 평균 매출 ${fmt.money(CALC.avgUnitPrice)}의 ${fmt.pct(cpaShareAd)}입니다. ` +
+      `오가닉 ${S.organicOrders}건은 빼고 셌습니다.`,
       '광고 단가가 아니라 신청 건수의 절대량이 부족한 상태입니다.');
   }
 
@@ -96,10 +99,10 @@ function buildFindings() {
   if (G && V) {
     if (V.cpaRatio >= 1.5) {
       add('warn', `대행 광고의 신청 1건당 비용이 자체 광고의 ${V.cpaRatio.toFixed(1)}배입니다`,
-        `자체 Meta ${fmt.money(V.self.costJpy)}로 ${V.self.orders}건(건당 ${fmt.money(V.self.cpaJpy)}) · ` +
+        `자체 Meta ${fmt.money(V.self.costJpy)}로 광고 기여 ${V.self.adOrders}건(건당 ${fmt.money(V.self.cpaJpy)}) · ` +
         `대행 ${fmt.money(V.agency.costJpy)}로 ${V.agency.orders}건(건당 ${fmt.money(V.agency.cpaJpy)}). ` +
-        `광고비는 ${V.costRatio.toFixed(1)}배 쓰고 신청은 ${V.self.orders}건에서 ${V.agency.orders}건으로 줄었습니다.`,
-        '둘 다 기간 총계 기준이라 정확한 귀속은 아닙니다. 다만 같은 잣대로 봤을 때 차이가 커서, 대행사에 타겟팅과 소재 구성을 물어볼 근거가 됩니다.');
+        `자체 쪽은 오가닉 ${V.self.organicOrders}건(${fmt.money(V.self.organicAmount)})을 빼고 센 값입니다.`,
+        '대행 숫자는 대행사가 낸 기간 총계라 오가닉이 섞여 있을 수 있습니다. 즉 이 배수는 대행에 유리한 쪽으로 기운 값이고, 실제 차이는 더 클 가능성이 있습니다. 대행사에 귀속 기준과 타겟팅을 확인할 지점입니다.');
     }
     if (G.capOverPct > 0) {
       add('warn', `대행 광고 CPA가 대행사 자체 상한을 ${fmt.pct(G.capOverPct, 0)} 넘었습니다`,
