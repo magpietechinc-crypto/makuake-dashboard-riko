@@ -89,6 +89,32 @@ const FIGURES = {
      비어 있으면 소재별 성과 탭에 자체 Meta 광고 결과만 나온다. */
   agencyCreatives: [],
 
+  /* 프로젝트별 일별 추이. 비교 탭의 선 그래프가 쓴다.
+     캠페인 경과일(1일차, 2일차 ...)로 맞춰 그리므로 시작일이 달라도 겹쳐 볼 수 있다.
+
+     RIKO 만 들어 있다. 과거 프로젝트는 넣을 수 없다.
+     Makuake 가 종료된 프로젝트의 애널리틱스 기간을 전체 기간으로 잠가 두기 때문이다.
+     (종료 프로젝트의 날짜 선택 창에는 '実施期間にする' 하나만 있고, 날짜를 직접 눌러도
+      범위가 바뀌지 않는다. 실제 마우스 클릭으로도 확인했다.)
+     비교는 총계를 일수로 나눈 '하루 평균'으로 대신한다. */
+  dailyByProject: {
+    '140182': [
+      { amount: 121700, pageViews: 2721, orders: 3 },
+      { amount: 29900,  pageViews: 1610, orders: 1 },
+      { amount: 29900,  pageViews: 1509, orders: 1 },
+      { amount: 89700,  pageViews: 1713, orders: 3 },
+      { amount: 29900,  pageViews: 1252, orders: 1 },
+      { amount: 29900,  pageViews: 1361, orders: 1 },
+      { amount: 215600, pageViews: 1433, orders: 4 },
+      { amount: 0,      pageViews: 1643, orders: 0 },
+      { amount: 59800,  pageViews: 801,  orders: 2 },
+      { amount: 29900,  pageViews: 461,  orders: 1 },
+      { amount: 0,      pageViews: 450,  orders: 0 },
+      { amount: 59800,  pageViews: 276,  orders: 2 },
+      { amount: 29900,  pageViews: 457,  orders: 1 }
+    ]
+  },
+
   /* 비교용 과거 프로젝트. 각 프로젝트 애널리틱스의 전체 기간 누적값. */
   compare: [
     { id: '140182', start: '2026-08-19', end: '2026-09-15', amount: 726000,   pageViews: 15687,  orders: 20,   ongoing: true },

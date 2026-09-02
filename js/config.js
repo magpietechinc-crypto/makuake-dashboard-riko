@@ -54,6 +54,21 @@ const CONFIG = {
     cvrLowRatio: 0.5         // 과거 평균 전환율의 이 배수 미만이면 경고
   },
 
+  /* 소재 이미지 파일. assets/creatives/ 폴더 안의 파일 이름이다.
+     열쇠는 figures.js 의 소재 이름과 정확히 같아야 한다.
+     파일이 없으면 화면에 점선 빈 칸이 나온다. */
+  creativeAssets: {
+    '영상 C':    'assets/creatives/video_C.jpg',
+    '영상 B':    'assets/creatives/video_B.jpg',
+    '영상 A':    'assets/creatives/video_A.jpg',
+    '이미지 01': 'assets/creatives/image_01.jpg',
+    '이미지 02': 'assets/creatives/image_02.jpg',
+    '썸네일':    'assets/creatives/thumbnail.jpg',
+    'GIF 01':   'assets/creatives/gif_01.jpg',
+    'GIF 02':   'assets/creatives/gif_02.jpg',
+    'GIF 03':   'assets/creatives/gif_03.jpg'
+  },
+
   /* 비교 프로젝트 표시 이름. Makuake 프로젝트 ID가 열쇠다. */
   compareLabels: {
     '140182': { short: 'RIKO', full: '자동 습식 급식기 RIKO' },

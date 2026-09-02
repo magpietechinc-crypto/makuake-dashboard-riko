@@ -3,16 +3,27 @@
    보고 싶은 프로젝트를 여러 개 골라 볼 수 있다. */
 
 let COMPARE_SELECTED = null;   // Set<projectId>
+let COMPARE_METRIC = 'pageViews';   // 추이 그래프에서 볼 지표
+let COMPARE_MODE = 'daily';         // 'daily' 하루치 · 'cum' 누적
+
+const COMPARE_METRICS = [
+  { key: 'pageViews', name: '페이지 조회수', unit: '회', money: false },
+  { key: 'orders',    name: '신청 건수',     unit: '건', money: false },
+  { key: 'amount',    name: '펀딩 금액',     unit: '',   money: true }
+];
 
 function compareRows() {
   return FIGURES.compare.map(p => {
     const label = CONFIG.compareLabels[p.id] || { short: p.id, full: p.id };
-    const days = daysBetween(p.start, p.end);
+    /* 진행 중인 프로젝트는 아직 안 지난 날까지 나누면 안 된다.
+       실제로 데이터가 쌓인 날수(경과일)로 나눈다. 끝난 프로젝트는 둘이 같다. */
+    const totalDays = daysBetween(p.start, p.end);
+    const days = p.ongoing ? CALC.elapsedDays : totalDays;
     return {
       ...p,
       short: label.short,
       full: label.full,
-      days,
+      days, totalDays,
       cvr: p.pageViews ? (p.orders / p.pageViews) * 100 : 0,
       perDay: days ? p.amount / days : 0,
       avgUnit: p.orders ? p.amount / p.orders : 0
@@ -63,7 +74,7 @@ function renderCompare(el) {
     <tr class="${p.id === riko.id ? 'me' : ''}">
       <td>${esc(p.full)}${p.ongoing ? ' <span class="tag">진행중</span>' : ''}</td>
       <td>${p.start.slice(0, 7).replace('-', '.')} ~ ${p.end.slice(0, 7).replace('-', '.')}</td>
-      <td>${p.days}일</td>
+      <td>${p.days}일${p.ongoing ? ` <span style="color:var(--text-tertiary)">/ ${p.totalDays}일</span>` : ''}</td>
       <td>${fmt.money(p.amount)}</td>
       <td>${fmt.int(p.pageViews)}</td>
       <td>${fmt.int(p.orders)}</td>
@@ -82,6 +93,48 @@ function renderCompare(el) {
       </table>
     </div>`;
 
+  /* ── 지표 선택 (아래 두 그래프가 함께 쓴다) ───── */
+  const withDaily = sel.filter(p => (FIGURES.dailyByProject || {})[p.id]);
+  const spec = COMPARE_METRICS.find(m => m.key === COMPARE_METRIC);
+
+  const metricPicker = `
+    <div class="picker" id="cmp-metric">
+      ${COMPARE_METRICS.map(m => `
+        <label class="${COMPARE_METRIC === m.key ? 'on' : ''}" data-metric="${m.key}">${esc(m.name)}</label>`).join('')}
+    </div>`;
+
+  /* 일평균 비교 — 총계를 캠페인 일수로 나눈 값이라 모든 프로젝트에 쓸 수 있다 */
+  const paceChart = `
+    <div class="chart-card" style="margin-bottom:12px">
+      <div class="chart-head">
+        <h3>하루 평균 ${esc(spec.name)}</h3>
+        <p class="hint">총계를 캠페인 일수로 나눈 값입니다. 기간이 다른 프로젝트를 같은 잣대로 비교합니다.
+        진행 중인 RIKO는 아직 안 지난 날을 빼고 경과한 ${CALC.elapsedDays}일로 나눴습니다.</p>
+      </div>
+      ${metricPicker}
+      <div class="chart-box" style="margin-top:14px"><canvas id="ch-cmp-pace"></canvas></div>
+    </div>`;
+
+  /* RIKO 일별 추이 — 과거 프로젝트는 Makuake가 일별 조회를 막아 선을 그릴 수 없다 */
+  const trend = `
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>RIKO 일별 ${esc(spec.name)}</h3>
+        <p class="hint">진행 중인 RIKO만 일별로 볼 수 있습니다. 위에서 고른 지표를 그대로 씁니다.</p>
+      </div>
+      <div class="picker" id="cmp-mode">
+        <label class="${COMPARE_MODE === 'daily' ? 'on' : ''}" data-mode="daily">하루치</label>
+        <label class="${COMPARE_MODE === 'cum' ? 'on' : ''}" data-mode="cum">누적</label>
+      </div>
+      <div class="chart-box" style="margin-top:14px"><canvas id="ch-cmp-trend"></canvas></div>
+      <p class="hint" style="margin-top:12px">
+        <strong>과거 프로젝트는 일별 선을 그릴 수 없습니다.</strong>
+        Makuake는 종료된 프로젝트의 애널리틱스 기간을 전체 기간으로 잠가 둡니다.
+        날짜를 눌러도 범위가 바뀌지 않아 하루치를 뽑아낼 방법이 없습니다.
+        대신 위의 하루 평균 그래프로 비교해 주세요.
+      </p>
+    </div>`;
+
   el.innerHTML = `
     <div class="section">
       <h2>프로젝트 비교</h2>
@@ -89,6 +142,7 @@ function renderCompare(el) {
       ${picker}
       ${summary}
     </div>
+    <div class="section">${paceChart}${trend}</div>
     <div class="section">
       <div class="chart-card" style="margin-bottom:12px">
         <div class="chart-head"><h3>전환율 비교</h3>
@@ -109,8 +163,7 @@ function renderCompare(el) {
     <div class="section"><h2>상세 표</h2>${table}</div>`;
 
   /* 선택 토글 */
-  const pk = document.getElementById('cmp-picker');
-  pk.addEventListener('click', e => {
+  document.getElementById('cmp-picker').addEventListener('click', e => {
     const lab = e.target.closest('label[data-id]');
     if (!lab) return;
     e.preventDefault();
@@ -120,7 +173,100 @@ function renderCompare(el) {
     renderCompare(el);
   });
 
+  document.getElementById('cmp-metric').addEventListener('click', e => {
+    const lab = e.target.closest('label[data-metric]');
+    if (!lab) return;
+    e.preventDefault();
+    COMPARE_METRIC = lab.dataset.metric;
+    renderCompare(el);
+  });
+
+  document.getElementById('cmp-mode').addEventListener('click', e => {
+    const lab = e.target.closest('label[data-mode]');
+    if (!lab) return;
+    e.preventDefault();
+    COMPARE_MODE = lab.dataset.mode;
+    renderCompare(el);
+  });
+
+  drawPaceChart(sel, riko.id);
+  drawTrendChart(withDaily, riko.id);
   drawCompareCharts(sel, riko.id);
+}
+
+/* 하루 평균 비교. 총계 / 캠페인 일수 — 총계만 있으면 되므로 모든 프로젝트에 쓸 수 있다. */
+function drawPaceChart(projects, rikoId) {
+  const spec = COMPARE_METRICS.find(m => m.key === COMPARE_METRIC);
+  const conv = v => (spec.money && CURRENCY === 'KRW') ? v * CONFIG.fx.krwPerJpy : v;
+  const sym = CURRENCY === 'KRW' ? '₩' : '¥';
+  const valueOf = p => {
+    const total = spec.key === 'amount' ? p.amount : spec.key === 'orders' ? p.orders : p.pageViews;
+    return p.days ? total / p.days : 0;
+  };
+
+  makeChart('ch-cmp-pace', {
+    type: 'bar',
+    data: {
+      labels: projects.map(p => p.short),
+      datasets: [{
+        label: `하루 평균 ${spec.name}`,
+        data: projects.map(p => conv(valueOf(p))),
+        backgroundColor: projects.map(p => (p.id === rikoId ? '#D85A30' : '#C9C6BC')),
+        borderRadius: 4
+      }]
+    },
+    options: chartOptions({
+      legend: false,
+      yTick: v => spec.money
+        ? sym + Math.round(v).toLocaleString('ko-KR')
+        : (v >= 10 ? Math.round(v).toLocaleString('ko-KR') : v.toFixed(1)) + spec.unit,
+      tip: (l, v) => spec.money
+        ? `${l}: ${sym}${Math.round(v).toLocaleString('ko-KR')}`
+        : `${l}: ${(v >= 10 ? Math.round(v).toLocaleString('ko-KR') : v.toFixed(1))}${spec.unit}`
+    })
+  });
+}
+
+/* 캠페인 경과일로 맞춘 일별 추이. 지금은 RIKO 만 데이터가 있다. */
+function drawTrendChart(projects, rikoId) {
+  const spec = COMPARE_METRICS.find(m => m.key === COMPARE_METRIC);
+  const maxLen = projects.reduce((n, p) => Math.max(n, FIGURES.dailyByProject[p.id].length), 0);
+  const labels = Array.from({ length: maxLen }, (_, i) => `${i + 1}일차`);
+  const palette = ['#185FA5', '#0F6E56', '#8A6D3B', '#6B4E9B', '#A32D2D', '#5F5E5A', '#2E7D8F'];
+  let ci = 0;
+
+  const conv = v => (spec.money && CURRENCY === 'KRW') ? v * CONFIG.fx.krwPerJpy : v;
+  const sym = CURRENCY === 'KRW' ? '₩' : '¥';
+
+  const datasets = projects.map(p => {
+    const raw = FIGURES.dailyByProject[p.id].map(d => d[spec.key]);
+    let series = raw;
+    if (COMPARE_MODE === 'cum') {
+      let acc = 0;
+      series = raw.map(v => (acc += v));
+    }
+    const isRiko = p.id === rikoId;
+    const color = isRiko ? '#D85A30' : palette[ci++ % palette.length];
+    return {
+      label: p.short, data: series.map(conv),
+      borderColor: color, backgroundColor: color,
+      borderWidth: isRiko ? 3 : 2, pointRadius: isRiko ? 3 : 2,
+      tension: 0.25, fill: false
+    };
+  });
+
+  makeChart('ch-cmp-trend', {
+    type: 'line',
+    data: { labels, datasets },
+    options: chartOptions({
+      yTick: v => spec.money
+        ? sym + Math.round(v).toLocaleString('ko-KR')
+        : Math.round(v).toLocaleString('ko-KR') + spec.unit,
+      tip: (l, v) => spec.money
+        ? `${l}: ${sym}${Math.round(v).toLocaleString('ko-KR')}`
+        : `${l}: ${Math.round(v).toLocaleString('ko-KR')}${spec.unit}`
+    })
+  });
 }
 
 function drawCompareCharts(sel, rikoId) {

@@ -56,7 +56,7 @@ function buildFindings() {
   /* ── 4. 광고 효율 자체는 나빴나 ──────────────── */
   if (A.landingRate >= T.landingRateOk) {
     add('good', '광고에서 페이지까지 오는 과정은 문제없었습니다',
-      `Link Clicks ${fmt.int(A.linkClicks)}회 중 ${fmt.int(A.lpv)}회가 실제로 페이지를 열었습니다. ` +
+      `클릭 ${fmt.int(A.linkClicks)}회 중 ${fmt.int(A.traffic)}회가 실제로 페이지를 열었습니다(트래픽). ` +
       `도달률 ${fmt.pct(A.landingRate)}입니다.`,
       '클릭 후 이탈은 크지 않습니다. 로딩이나 링크 문제는 아닙니다.');
   }

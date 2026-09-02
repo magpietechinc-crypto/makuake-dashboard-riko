@@ -126,6 +126,26 @@ tfoot tr { border-top: 2px solid var(--border-secondary); font-weight: 700; }
 .pl td.n { text-align: right; white-space: nowrap; }
 .pl td.p { text-align: right; color: var(--text-tertiary); font-size: 12px; white-space: nowrap; }
 
+/* ── 소재 카드 ────────────────────────────────── */
+.creative-card { display: flex; gap: 14px; align-items: flex-start; }
+.creative-card .creative-body { flex: 1 1 auto; min-width: 0; }
+.shot-box {
+  flex: 0 0 92px; width: 92px;
+  background: var(--bg-tertiary); border-radius: 8px; padding: 6px;
+}
+/* 소재마다 원본 비율이 다르다. 잘라내지 않고 정사각 틀 안에 맞춘다. */
+.shot-box img {
+  width: 100%; aspect-ratio: 1 / 1; object-fit: contain;
+  background: var(--bg-primary); border-radius: 5px; display: block;
+}
+.shot-empty {
+  display: block; width: 100%; aspect-ratio: 1 / 1;
+  border: 1px dashed var(--border-secondary); border-radius: 5px; background: var(--bg-primary);
+}
+.mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 10px; margin-top: 12px; font-size: 12px; }
+.mini-grid span { color: var(--text-tertiary); display: block; }
+.mini-grid strong { font-size: 13px; }
+
 /* ── 프로젝트 선택 ────────────────────────────── */
 .picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .picker label {

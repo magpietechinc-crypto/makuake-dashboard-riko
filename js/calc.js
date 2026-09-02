@@ -75,6 +75,13 @@ const CALC = (() => {
   /* ── 자체 Meta 광고 지표 ─────────────────────── */
   const m = FIGURES.metaAds;
   const mt = m.totals;
+  /* 지표 정의 (화면 전체가 이 정의를 따른다)
+       트래픽  = 광고를 눌러 실제로 페이지가 열린 횟수 (Meta 의 Landing Page Views)
+       CPM     = 광고비 / 노출 x 1000
+       CPC     = 광고비 / 클릭
+       CPL     = 광고비 / 트래픽        (트래픽 1회를 만드는 데 든 돈)
+       CVR     = 신청 / 트래픽          (페이지가 열린 뒤 실제 신청으로 이어진 비율)
+       도달률   = 트래픽 / 클릭          (클릭이 방문으로 이어진 비율) */
   const ads = {
     spendJpy:   metaJpy,
     spendKrw:   mt.spendKrw,
@@ -83,25 +90,32 @@ const CALC = (() => {
     impressions: mt.impressions,
     reach:      mt.reach,
     linkClicks: mt.linkClicks,
-    lpv:        mt.lpv,
+    traffic:    mt.lpv,
     frequency:  mt.reach ? mt.impressions / mt.reach : 0,
     ctr:        mt.impressions ? (mt.linkClicks / mt.impressions) * 100 : 0,
-    cpcJpy:     mt.linkClicks ? metaJpy / mt.linkClicks : 0,
     cpmJpy:     mt.impressions ? (metaJpy / mt.impressions) * 1000 : 0,
-    cplpvJpy:   mt.lpv ? metaJpy / mt.lpv : 0,
-    /* 클릭한 사람 중 실제로 페이지가 열린 비율 */
+    cpcJpy:     mt.linkClicks ? metaJpy / mt.linkClicks : 0,
+    cplJpy:     mt.lpv ? metaJpy / mt.lpv : 0,
     landingRate: mt.linkClicks ? (mt.lpv / mt.linkClicks) * 100 : 0
   };
 
-  /* 소재별 파생 지표 */
-  ads.creatives = m.creatives.map(c => ({
-    ...c,
-    spendJpy: c.spendKrw / rate,
-    share:    mt.spendKrw ? (c.spendKrw / mt.spendKrw) * 100 : 0,
-    ctr:      c.impressions ? (c.linkClicks / c.impressions) * 100 : 0,
-    cpcJpy:   c.linkClicks ? (c.spendKrw / rate) / c.linkClicks : 0,
-    cplpvJpy: c.lpv ? (c.spendKrw / rate) / c.lpv : 0
-  }));
+  /* 소재별 파생 지표.
+     소재 단위 CVR 은 낼 수 없다. Makuake 가 어느 소재에서 신청이 왔는지 알려주지 않는다.
+     대신 도달률(클릭 -> 트래픽)을 쓴다. */
+  ads.creatives = m.creatives.map(c => {
+    const sj = c.spendKrw / rate;
+    return {
+      ...c,
+      traffic:  c.lpv,
+      spendJpy: sj,
+      share:    mt.spendKrw ? (c.spendKrw / mt.spendKrw) * 100 : 0,
+      ctr:      c.impressions ? (c.linkClicks / c.impressions) * 100 : 0,
+      cpmJpy:   c.impressions ? (sj / c.impressions) * 1000 : 0,
+      cpcJpy:   c.linkClicks ? sj / c.linkClicks : 0,
+      cplJpy:   c.lpv ? sj / c.lpv : 0,
+      landingRate: c.linkClicks ? (c.lpv / c.linkClicks) * 100 : 0
+    };
+  });
 
   /* ── 광고 집행기 vs 중단 후 ──────────────────── */
   const onDays  = FIGURES.daily.filter(d => d.date >= m.runStart && d.date <= m.runEnd);
@@ -125,11 +139,31 @@ const CALC = (() => {
   period.viewsDrop  = period.on.viewsPerDay  ? (period.off.viewsPerDay  / period.on.viewsPerDay  - 1) * 100 : 0;
   period.ordersDrop = period.on.ordersPerDay ? (period.off.ordersPerDay / period.on.ordersPerDay - 1) * 100 : 0;
 
-  /* 광고 집행기의 Meta 기준 전환율: Meta가 센 랜딩 도달 대비 그 기간 신청 건수 */
-  ads.metaCvr = mt.lpv ? (period.on.orders / mt.lpv) * 100 : 0;
-  ads.cpaJpy  = period.on.orders ? metaJpy / period.on.orders : 0;
+  /* CVR = 신청 / 트래픽. 신청은 Makuake 쪽 수치, 트래픽은 Meta 쪽 수치라 출처가 다르다.
+     Meta 가 데려온 방문이 신청으로 얼마나 이어졌는지 보는 용도다. */
+  ads.cvr    = mt.lpv ? (period.on.orders / mt.lpv) * 100 : 0;
+  ads.orders = period.on.orders;
+  ads.cpaJpy = period.on.orders ? metaJpy / period.on.orders : 0;
   /* 신청 1건이 만드는 매출 대비 광고비 비중 */
   ads.cpaShare = avgUnitPrice ? (ads.cpaJpy / avgUnitPrice) * 100 : 0;
+
+  /* 일별 광고 지표. Makuake 의 그날 신청 건수를 붙여 CVR 까지 낸다. */
+  const ordersByDate = {};
+  FIGURES.daily.forEach(d => { ordersByDate[d.date] = d.orders; });
+  ads.daily = m.daily.map(d => {
+    const sj = d.spendKrw / rate;
+    const orders = ordersByDate[d.date] || 0;
+    return {
+      date: d.date, spendJpy: sj, spendKrw: d.spendKrw,
+      impressions: d.impressions, reach: d.reach, linkClicks: d.linkClicks,
+      traffic: d.lpv, orders,
+      ctr:    d.impressions ? (d.linkClicks / d.impressions) * 100 : 0,
+      cpmJpy: d.impressions ? (sj / d.impressions) * 1000 : 0,
+      cpcJpy: d.linkClicks ? sj / d.linkClicks : 0,
+      cplJpy: d.lpv ? sj / d.lpv : 0,
+      cvr:    d.lpv ? (orders / d.lpv) * 100 : 0
+    };
+  });
 
   return {
     totalDays, elapsedDays, remainDays, sgaPerDay, today,
